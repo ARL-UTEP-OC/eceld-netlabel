@@ -5,12 +5,15 @@ import json
 import time
 from calendar import timegm
 
+cwd = os.path.dirname(__file__)
+
 
 def readJSONData():
     commandlist = list()
     timeutclist = list()
     epochlist = list()
-    with open('/root/Desktop/Traffic/snoopyData.JSON', 'r') as json_file:
+    json_filename = os.path.join(cwd, '2019_06_11Traffic_Curation_files/IV_snoopyData.JSON')
+    with open(json_filename, 'r') as json_file:
         data = json.load(json_file)
         for p in data:
             #logging.info("first: "+ str(p['snoopy_id']))
@@ -26,16 +29,19 @@ def readJSONData():
     logging.info(epochlist)
     return float(epochlist[0])
 
-#use tshark to get the framenumbers from the pcapng file
+#Use tshark to get the framenumbers from the pcapng file
+#Note: this is the command thar requires init.lua to be disabled;known to happen if run as superuser
 def tshark(epochtime):
     packets = list()
     packet_time = list()
     packet_frame = list()
-    output = subprocess.check_output(["tshark", "-r", "/root/Desktop/Traffic/test.pcapng", "-Y", '(frame.time_epoch >= 1551220737.521798140) && (frame.time_epoch <= 1560375581)', "-T", "fields", "-e", "frame.time_epoch", "-e", "frame.number"])
-    file = open('/root/Desktop/Traffic/timewframenum', 'w+')
+    input_file = os.path.join(cwd, '2019_06_11Traffic_Curation_files/III_pivoting_capture_annotated_v2.pcapng')
+    output = subprocess.check_output(["tshark", "-r", input_file, "-Y", '(frame.time_epoch >= 1508953300) && (frame.time_epoch <= 1560375581)', "-T", "fields", "-e", "frame.time_epoch", "-e", "frame.number"])
+    output_file = os.path.join(cwd, 'timewframenum')
+    file = open(output_file, 'w+')
     output = output.decode("utf-8")
     file.write(output)
-    file = open('/root/Desktop/Traffic/timewframenum', 'r')
+    file = open(output_file, 'r')
     for line in file:
         packets.append(line)
         if float(line[:20]) >= epochtime:
@@ -43,10 +49,10 @@ def tshark(epochtime):
             packet_time.append(float(line[:20]))
             packet_frame.append(int(line[21:-1]))
     file.close()
-    logging.info(packets)
-    logging.info(packet_time)
-    logging.info(packet_frame)
-    os.remove('/root/Desktop/Traffic/timewframenum')
+    #logging.info(packets)
+    #logging.info(packet_time)
+    #logging.info(packet_frame)
+    os.remove(output_file)
     return packet_time, packet_frame
 
 #Use editcap to add a comment to the frame numbers (within .1 second before and 1 second after) based on the data within the snoopy log.
@@ -63,7 +69,9 @@ def editcap(first_command, packet_time, packet_frame):
     logging.info(filtered_packet_frame)
     framenumber = "1"
     testcomment = "I was here"
-    subprocess.call(["editcap", "/root/Desktop/Traffic/test.pcapng", "/root/Desktop/Traffic/test_comment.pcapng", "-a", framenumber+":"+testcomment])
+    input_file = os.path.join(cwd, '2019_06_11Traffic_Curation_files/III_pivoting_capture_annotated_v2.pcapng')
+    output_file = os.path.join(cwd, 'test_comment.pcapng')
+    subprocess.call(["editcap", input_file, output_file, "-a", framenumber+":"+testcomment])
 
 if __name__=="__main__":
     logging.basicConfig(format='%(levelname)s:%(message)s', level = logging.DEBUG)
