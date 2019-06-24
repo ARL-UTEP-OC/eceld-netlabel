@@ -7,7 +7,7 @@ from calendar import timegm
 
 cwd = os.path.dirname(__file__)
 
-
+#Read and extract data from JSON file
 def readJSONData():
     commandlist = list()
     timeutclist = list()
@@ -16,6 +16,7 @@ def readJSONData():
     with open(json_filename, 'r') as json_file:
         data = json.load(json_file)
         for p in data:
+            #logging.info("first: "+ str(p))
             #logging.info("first: "+ str(p['snoopy_id']))
             #logging.info("second: "+ str(p['content']))
             #logging.info("third: "+ str(p['className']))
@@ -27,10 +28,10 @@ def readJSONData():
     logging.info(commandlist)
     logging.info(timeutclist)
     logging.info(epochlist)
-    return float(epochlist[0])
+    return float(epochlist[0]), commandlist
 
 #Use tshark to get the framenumbers from the pcapng file
-#Note: this is the command thar requires init.lua to be disabled;known to happen if run as superuser
+#Note: this is the command that requires init.lua to be disabled;known to happen if run as superuser
 def tshark(epochtime):
     packets = list()
     packet_time = list()
@@ -44,6 +45,7 @@ def tshark(epochtime):
     file = open(output_file, 'r')
     for line in file:
         packets.append(line)
+        #logging.info(packets)
         if float(line[:20]) >= epochtime:
         #if float(epochtime) >= float(line[:20]):
             packet_time.append(float(line[:20]))
@@ -56,25 +58,26 @@ def tshark(epochtime):
     return packet_time, packet_frame
 
 #Use editcap to add a comment to the frame numbers (within .1 second before and 1 second after) based on the data within the snoopy log.
-def editcap(first_command, packet_time, packet_frame):
+def editcap(commandlist, first_command, packet_time, packet_frame):
     start = first_command - .1
     end = first_command + 1
     filtered_packet_time = list()
     filtered_packet_frame = list()
     for i in range(len(packet_time)):
-        if packet_time[i] >= start and packet_time[i] <= end: #if the time falls inside time frame add it
+        if packet_time[i] >= start and packet_time[i] <= end: #if the time falls inside 1.1 sec time frame add it
             filtered_packet_time.append(packet_time[i])
             filtered_packet_frame.append(packet_frame[i])
     logging.info(filtered_packet_time)
     logging.info(filtered_packet_frame)
-    framenumber = "1"
-    testcomment = "I was here"
     input_file = os.path.join(cwd, '2019_06_11Traffic_Curation_files/III_pivoting_capture_annotated_v2.pcapng')
     output_file = os.path.join(cwd, 'test_comment.pcapng')
+    #insert for loop here to do all the frames
+    framenumber = "1"
+    testcomment = "start\ncmd: "+commandlist[0]
     subprocess.call(["editcap", input_file, output_file, "-a", framenumber+":"+testcomment])
 
 if __name__=="__main__":
     logging.basicConfig(format='%(levelname)s:%(message)s', level = logging.DEBUG)
-    epochtime = readJSONData()
+    epochtime, commandlist = readJSONData()
     packet_time, packet_frame = tshark(epochtime)
-    editcap(epochtime, packet_time, packet_frame)
+    editcap(commandlist, epochtime, packet_time, packet_frame)
