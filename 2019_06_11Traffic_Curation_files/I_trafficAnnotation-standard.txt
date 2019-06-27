@@ -1,0 +1,67 @@
+##PROBABLY BLOATED FORMATTING STRUCTURE###
+Possible structure:
+<start | end | during | unknown> 
+[span=<display-filter>]
+< [\ntool=<name> | [\ncmd=<cmd-line> | [\naction=<action-description>] >+
+[\ntype=(background | invoked)] 
+[\nmeth-phase <1-5>[,1-5]+] 
+[\ncomment=<free-text>] 
+[\nconfidence=<1-3>]
+##########################################
+
+#######PLAN FOR SEMI-AUTO LABELING########
+Plan for semi-auto labeling:
+1. read timestamp from snoopy events within the parsed data file
+2. use tshark to get the framenumbers from the pcapng file e.g., using
+tshark -r test.pcapng -Y "(frame.time_epoch >= 1551220737.521798140) && (frame.time_epoch <= 1551220737.535983541)" -T fields -e frame.time_epoch -e frame.number
+3. Use editcap to add a comment to the frame numbers (within .1 second before and 1 second after) based on the data within the snoopy log. Specifically these items:
+start
+cmd
+type=invoked
+
+Example: 
+For all packets within the timeframe: 2017-10-25T11:41:41-0600 and 2017-10-25T11:41:43-0600, add the following comment
+start
+cmd="nmap 10.0.0.0-255"
+type=invoked
+
+Need a vis tool to line everything up -- to at least help when annotating the data
+-Use LUA and it's GUI component for Wireshark
+-Incorporate more of the collected data for auto-labeling (seems to work well)
+#############################################
+
+###########BRAINSTORMING IDEAS TO KEEP IN MIND###########
+What to annotate:
+-Relevant to TAACD
+-Different than malware
+--not scripted/deterministic
+-stuff that can't be automated
+--tool name
+--x during y
+--subtags
+--multitags
+-only malicious
+
+-tool usage
+--start/end
+--name/flags
+--span (specify with filter)
+
+-things that would help to automate simple labels
+--standard format
+--help to create snort/bro signatures -- the "why tagged" in addition to the tool start name
+-markers with arbitrary labels
+#########################################
+
+###########METHODOLOGY LABELS###########
+Based on: https://www.coengoedegebure.com/5-phases-of-hacking/ and http://iro.teicrete.gr/wp-content/uploads/sites/107/2017/11/EthHaPdFNov17Her.pdf and https://null-byte.wonderhowto.com/how-to/five-phases-hacking-0167990/
+Methodology-Stage
+1.Intel Gathering/Recon
+2.Scan
+3.Exploit/Gain Access
+4.Persistance/Maintain Access/Advancement
+5.Cover Tracks/Cleanup
+#########################################
+
+Kill chain?
+-ingress, lateral, objective
