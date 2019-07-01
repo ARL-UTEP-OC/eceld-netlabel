@@ -10,11 +10,14 @@ import shlex
 cwd = os.path.dirname(__file__)
 
 #Read and extract data from JSON file
-def readJSONData():
+def readJSONData(file_loc=None):
     logging.debug("readJSONData(): instantiated")
     #will hold the event and its timestamp
     eventlist = list()
-    json_filename = os.path.join(cwd, '2019_06_11Traffic_Curation_files/IV_snoopyData.JSON')
+    if file_loc:
+        json_filename = file_loc
+    else:
+        json_filename = os.path.join(cwd, '2019_06_11Traffic_Curation_files/IV_snoopyData.JSON')
     logging.info("readJSONData(): reading file as json data")
     with open(json_filename, 'r') as json_file:
         data = json.load(json_file)
@@ -26,10 +29,13 @@ def readJSONData():
 
 #Use tshark to get the framenumbers from the pcapng file
 #Note: this is the command that requires init.lua to be disabled;known to happen if run as superuser
-def getFrameNums(startEpochTime, endEpochTime):
+def getFrameNums(startEpochTime, endEpochTime, file_loc=None):
     logging.debug("getFrameNums(): instantiated")
     frameNums = list()
-    input_file = os.path.join(cwd, '2019_06_11Traffic_Curation_files/III_pivoting_capture_annotated_v2.pcapng')
+    if file_loc:
+        input_file = file_loc
+    else:
+        input_file = os.path.join(cwd, '2019_06_11Traffic_Curation_files/III_pivoting_capture_annotated_v2.pcapng')
     cmd = "tshark -r " + input_file + " -Y \"(frame.time_epoch >= "+str(startEpochTime) +") && (frame.time_epoch <= "+str(endEpochTime) +")\" -T fields -e frame.number"
     logging.debug("getFrameNums(): running command: " + cmd)
     logging.info("getFrameNums(): Matching frame numbers with timestamps between " + str(startEpochTime) +" to " + str(endEpochTime))
@@ -49,10 +55,12 @@ def getFrameNums(startEpochTime, endEpochTime):
     return frameNums
 
 #Use editcap to add a comment to the frame numbers (within .1 second before and 1 second after) based on the data within the snoopy log.
-def injectComment(event, frameNums):
+def injectComment(event, frameNums, file_loc=None):
     logging.debug("injectComment(): instantiated")
-
-    input_file = os.path.join(cwd, '2019_06_11Traffic_Curation_files/III_pivoting_capture_annotated_v2.pcapng')
+    if file_loc:
+        input_file = file_loc
+    else:
+        input_file = os.path.join(cwd, '2019_06_11Traffic_Curation_files/III_pivoting_capture_annotated_v2.pcapng')
     output_file = os.path.join(cwd, 'auto_annotation.pcapng')
     #insert for loop here to do all the frames 
     logging.info("injectComment(): Adding comment to frames")
