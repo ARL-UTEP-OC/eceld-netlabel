@@ -3,7 +3,7 @@ import logging
 #from PyQt5.QtWidgets import *
 from PyQt5.QtCore import *
 #from PyQt5.QtGui import *
-from PyQt5.QtWidgets import QApplication, QWidget, QPushButton, QMainWindow, QGridLayout, QMessageBox, QFileDialog, QLabel, QLineEdit, QVBoxLayout, QHBoxLayout
+from PyQt5.QtWidgets import QApplication, QWidget, QPushButton, QMainWindow, QGridLayout, QMessageBox, QFileDialog, QLabel, QLineEdit, QVBoxLayout, QHBoxLayout, QPlainTextEdit
 from Traffic_Auto_Label import readJSONData, getFrameNums, injectComment
 
 
@@ -47,12 +47,23 @@ class MainWindow(QWidget):
         layout2.addWidget(button2)
         layout2.addWidget(self.file_selected2)
 
+        comment_label = QLabel('Insert extra commments (Optional)')
+        comment_label.setAlignment(Qt.AlignCenter)
+        self.comment_box = QPlainTextEdit()
+        #self.comment_box.insertPlainText('Some text')
+        if self.comment_box.toPlainText() == '':
+            print('nothing')
+        #print(self.comment_box.toPlainText())
+        #print(dir(self.comment_box))
+
         mainlayout.addWidget(label1)
         mainlayout.addLayout(layout1)
         mainlayout.addStretch()
         mainlayout.addWidget(label2)
         mainlayout.addLayout(layout2)
         mainlayout.addStretch()
+        mainlayout.addWidget(comment_label)
+        mainlayout.addWidget(self.comment_box)
         mainlayout.addWidget(button_ok)
         self.setLayout(mainlayout)
         logging.info("MainWindow(): Complete")
@@ -87,8 +98,13 @@ class MainWindow(QWidget):
             frameNums = getFrameNums(startEpochTime, endEpochTime, self.file_selected2.text())
             #Seems to get stuck on frameNums
             if frameNums != None:
-                logging.debug("on_ok_clicked(): calling inject comment for Event: " + str(event) + " FrameNums: " + str(frameNums))
-                injectComment(event, frameNums, self.file_selected2.text())
+                logging.debug("on_ok_clicked(): Calling inject comment for Event: " + str(event) + " FrameNums: " + str(frameNums))
+                if self.comment_box.toPlainText() == '':
+                    logging.info('on ok clicked(): Calling inject comment with no custom comment')
+                    injectComment(event, frameNums, self.file_selected2.text())
+                else:
+                    logging.info('on ok clicked(): Calling inject comment with custom comment')
+                    injectComment(event, frameNums, self.file_selected2.text(), self.comment_box.toPlainText())
         logging.info('on_ok_clicked(): Complete')
 
 
