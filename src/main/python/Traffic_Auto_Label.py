@@ -7,7 +7,7 @@ import time
 from calendar import timegm
 import shlex
 
-cwd = os.path.dirname(__file__)
+cwd = os.getcwd()
 
 #Read and extract data from JSON file
 def readJSONData(file_loc=None):
@@ -55,7 +55,7 @@ def getFrameNums(startEpochTime, endEpochTime, file_loc=None):
     return frameNums
 
 #Use editcap to add a comment to the frame numbers (within .1 second before and 1 second after) based on the data within the snoopy log.
-def injectComment(event, frameNums, file_loc=None, custom_comment=None):
+def injectComment(event, frameNums, file_loc=None):
     logging.debug("injectComment(): instantiated")
     if file_loc:
         input_file = file_loc
@@ -65,10 +65,7 @@ def injectComment(event, frameNums, file_loc=None, custom_comment=None):
     #insert for loop here to do all the frames 
     logging.info("injectComment(): Adding comment to frames")
     for frameNum in frameNums:
-        if custom_comment:
-            comment = "start\ncmd: " + event + "\nExtra comment:\n" + custom_comment
-        else:
-            comment = "start\ncmd: " + event
+        comment = "start\ncmd: " + event
         cmd = "editcap " + input_file + " " + output_file + " -a " + frameNum + ":\"" + comment + "\""
         logging.debug("injectComment(): running command: " + cmd)
         if sys.platform == "linux" or sys.platform == "linux2":
