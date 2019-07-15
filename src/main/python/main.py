@@ -10,6 +10,7 @@ from GUI.Dialogs.WiresharkFileDialog import WiresharkFileDialog
 from GUI.Dialogs.ProgressBarWindow import ProgressBarWindow
 from Traffic_Auto_Label import readJSONData, getFrameNums, injectComment
 from CommandLoad import CommandLoad
+from WiresharkWindow import WiresharkWindow
 
 class MainApp(QMainWindow):
     def __init__(self):
@@ -50,13 +51,18 @@ class MainApp(QMainWindow):
         annotate_button = QPushButton('Annotate')
         annotate_button.clicked.connect(self.on_annotate_button_clicked)
 
+        label4 = QLabel('To open up wireshark click the button below')
+        label4.setAlignment(Qt.AlignCenter)
+
+        activate_wireshark_button = QPushButton('Run Wireshark')
+        activate_wireshark_button.clicked.connect(self.on_activate_wireshark_button_clicked)
+
         layout1.addWidget(json_button)
         layout1.addWidget(self.json_file)
 
         layout2.addWidget(wireshark_button)
         layout2.addWidget(self.wireshark_file)
-        #self.window = ProgressBarWindow(10)
-        #self.window.show()
+        
         mainlayout.addWidget(label1)
         mainlayout.addLayout(layout1)
         mainlayout.addStretch()
@@ -65,6 +71,9 @@ class MainApp(QMainWindow):
         mainlayout.addStretch()
         mainlayout.addWidget(label3)
         mainlayout.addWidget(annotate_button)
+        mainlayout.addStretch()
+        mainlayout.addWidget(label4)
+        mainlayout.addWidget(activate_wireshark_button)
         mainlayout.addStretch()
         mainwidget.setLayout(mainlayout)
         logging.info("MainWindow(): Complete")
@@ -101,6 +110,12 @@ class MainApp(QMainWindow):
     def thread_finish(self):
         logging.info('CommandLoad(): Thread Finished')
         self.window.hide()
+
+    def on_activate_wireshark_button_clicked(self):
+        logging.info('on_activate_wireshark_button_clicked(): Instantiated')
+        self.wireshark_thread = WiresharkWindow()
+        self.wireshark_thread.start()
+        logging.info('on_activate_wireshark_button_clicked(): Complete')
 
 if __name__ == '__main__':
     logging.info("main(): Instantiated")

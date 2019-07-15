@@ -24,9 +24,7 @@ class CommandLoad(QThread):
             #Seems to get stuck on frameNums
             if frameNums != None:
                 logging.debug("on_ok_clicked(): Calling inject comment for Event: " + str(event) + " FrameNums: " + str(frameNums))
-                print('injecting')
                 injectComment(event, frameNums, self.wireshark_file)
-                print('injecting done')
             self.signal.emit()
         self.signal2.emit()
         logging.info('CommandLoad.run(): Completed')
