@@ -6,6 +6,7 @@ The purpose of this tool is to develop an annotation standard and augment wiresh
 ## How to setup (Using fbs freeze on linux)
 1. In order for this tool to work you must disable lua in wireshark.
 2. Create a virtual environment by running the command 'python3 -m venv venv'
+> If you havent installed the virtual environment you will need to run the command 'apt-get install python3-venv'
 3. Activate a virtual environment by running the command 'source venv/bin/activate'
 > The rest of the instructions is assuming the virtual environment is active.
 4. Next is to run the command 'pip install fbs PyQt5'
