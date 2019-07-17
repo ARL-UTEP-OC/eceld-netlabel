@@ -11,14 +11,16 @@ class CommandLoad(QThread):
         QThread.__init__(self)
         self.eventlist = None
         self.wireshark_file = ""
+        self.beforePacketTime = .1
+        self.afterPacketTime = 1
         logging.info('CommandLoad(): Completed')
 
     def run(self):
         logging.info('CommandLoad.run(): Instantiated')
         for (event, time) in self.eventlist:
             print('event: '+event+' time: '+str(time))
-            startEpochTime = float(time) - 0.1
-            endEpochTime = float(time) + 1
+            startEpochTime = float(time) - self.beforePacketTime
+            endEpochTime = float(time) + self.afterPacketTime
             logging.debug("on_ok_clicked(): Using start/stop: " + str(startEpochTime) + " " + str(endEpochTime))
             frameNums = getFrameNums(startEpochTime, endEpochTime, self.wireshark_file)
             #Seems to get stuck on frameNums

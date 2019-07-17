@@ -3,7 +3,7 @@ import sys
 import os
 from fbs_runtime.application_context.PyQt5 import ApplicationContext
 from PyQt5.QtCore import *
-from PyQt5.QtWidgets import QMainWindow, QWidget, QVBoxLayout, QHBoxLayout, QLabel, QPushButton, QLineEdit, QProgressBar
+from PyQt5.QtWidgets import QMainWindow, QWidget, QVBoxLayout, QHBoxLayout, QLabel, QPushButton, QLineEdit, QProgressBar, QDoubleSpinBox, QSpinBox
 
 from GUI.Dialogs.JSONFileDialog import JSONFileDialog
 from GUI.Dialogs.WiresharkFileDialog import WiresharkFileDialog
@@ -22,6 +22,8 @@ class MainApp(QMainWindow):
         mainlayout = QVBoxLayout()
         layout1 = QHBoxLayout()
         layout2 = QHBoxLayout()
+        layout3 = QHBoxLayout()
+        layout4 = QHBoxLayout()
 
         label1 = QLabel('Pick a JSON data file:')
         label1.setAlignment(Qt.AlignCenter)
@@ -45,14 +47,25 @@ class MainApp(QMainWindow):
         self.wireshark_file.setAlignment(Qt.AlignCenter)
         self.wireshark_file.setDisabled(True)
 
-        label3 = QLabel('Click the annotate button once\nyou are ready to comment the pcapng file')
+        label3 = QLabel('Select the time range before the\n first initial packet is found(sec)')
         label3.setAlignment(Qt.AlignCenter)
+
+        label4 = QLabel('Select the time range after the\n first initial packet is found(sec)')
+        label4.setAlignment(Qt.AlignCenter)
+
+        self.left_spinbox = QDoubleSpinBox()
+        self.left_spinbox.setSingleStep(.1)
+
+        self.right_spinbox = QSpinBox()
+
+        label5 = QLabel('Click the annotate button once\nyou are ready to comment the pcapng file')
+        label5.setAlignment(Qt.AlignCenter)
 
         annotate_button = QPushButton('Annotate')
         annotate_button.clicked.connect(self.on_annotate_button_clicked)
 
-        label4 = QLabel('To open up wireshark click the button below')
-        label4.setAlignment(Qt.AlignCenter)
+        label6 = QLabel('To open up wireshark click the button below')
+        label6.setAlignment(Qt.AlignCenter)
 
         activate_wireshark_button = QPushButton('Run Wireshark')
         activate_wireshark_button.clicked.connect(self.on_activate_wireshark_button_clicked)
@@ -62,6 +75,12 @@ class MainApp(QMainWindow):
 
         layout2.addWidget(wireshark_button)
         layout2.addWidget(self.wireshark_file)
+
+        layout3.addWidget(label3)
+        layout3.addWidget(label4)
+
+        layout4.addWidget(self.left_spinbox)
+        layout4.addWidget(self.right_spinbox)
         
         mainlayout.addWidget(label1)
         mainlayout.addLayout(layout1)
@@ -69,10 +88,13 @@ class MainApp(QMainWindow):
         mainlayout.addWidget(label2)
         mainlayout.addLayout(layout2)
         mainlayout.addStretch()
-        mainlayout.addWidget(label3)
+        mainlayout.addLayout(layout3)
+        mainlayout.addLayout(layout4)
+        mainlayout.addStretch()
+        mainlayout.addWidget(label5)
         mainlayout.addWidget(annotate_button)
         mainlayout.addStretch()
-        mainlayout.addWidget(label4)
+        mainlayout.addWidget(label6)
         mainlayout.addWidget(activate_wireshark_button)
         mainlayout.addStretch()
         mainwidget.setLayout(mainlayout)
@@ -98,6 +120,8 @@ class MainApp(QMainWindow):
         self.command_thread = CommandLoad()
         self.command_thread.eventlist = eventlist
         self.command_thread.wireshark_file = self.wireshark_file.text()
+        self.command_thread.beforePacketTime = self.left_spinbox.value()
+        self.command_thread.afterPacketTime = self.right_spinbox.value()
         self.command_thread.signal.connect(self.update_progress_bar)
         self.command_thread.signal2.connect(self.thread_finish)
         self.command_thread.start()
