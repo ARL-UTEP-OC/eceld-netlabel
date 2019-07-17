@@ -55,8 +55,10 @@ class MainApp(QMainWindow):
 
         self.left_spinbox = QDoubleSpinBox()
         self.left_spinbox.setSingleStep(.1)
+        self.left_spinbox.setMinimum(.1)
 
         self.right_spinbox = QSpinBox()
+        self.right_spinbox.setMinimum(1)
 
         label5 = QLabel('Click the annotate button once\nyou are ready to comment the pcapng file')
         label5.setAlignment(Qt.AlignCenter)
