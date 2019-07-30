@@ -24,9 +24,10 @@ class MainApp(QMainWindow):
         layout2 = QHBoxLayout()
         layout3 = QHBoxLayout()
         layout4 = QHBoxLayout()
+        layout5 = QHBoxLayout()
 
-        label1 = QLabel('Pick a JSON data file:')
-        label1.setAlignment(Qt.AlignCenter)
+        json_label = QLabel('Pick a JSON data file:')
+        json_label.setAlignment(Qt.AlignCenter)
 
         json_button = QPushButton('JSON file')
         json_button.clicked.connect(self.on_json_button_clicked)
@@ -36,8 +37,19 @@ class MainApp(QMainWindow):
         self.json_file.setAlignment(Qt.AlignCenter)
         self.json_file.setDisabled(True)
 
-        label2 = QLabel('Pick a Wireshark file')
-        label2.setAlignment(Qt.AlignCenter)
+        additional_json_label = QLabel('If you would like to add additional JSON files(Optional):')
+        additional_json_label.setAlignment(Qt.AlignCenter)
+
+        additional_json_button = QPushButton('Add JSON file')
+        additional_json_button.clicked.connect(self.on_additional_json_button_clicked)
+
+        self.additional_json_file = QLineEdit()
+        self.additional_json_file.setText('Nothing has been selected')
+        self.additional_json_file.setAlignment(Qt.AlignCenter)
+        self.additional_json_file.setDisabled(True)
+
+        wireshark_label = QLabel('Pick a Wireshark file')
+        wireshark_label.setAlignment(Qt.AlignCenter)
 
         wireshark_button = QPushButton('Wireshark file')
         wireshark_button.clicked.connect(self.on_wireshark_button_clicked)
@@ -47,11 +59,11 @@ class MainApp(QMainWindow):
         self.wireshark_file.setAlignment(Qt.AlignCenter)
         self.wireshark_file.setDisabled(True)
 
-        label3 = QLabel('Select the time range before the\n first initial packet is found(sec)')
-        label3.setAlignment(Qt.AlignCenter)
+        left_time_label = QLabel('Select the time range before the\n first initial packet is found(sec)')
+        left_time_label.setAlignment(Qt.AlignCenter)
 
-        label4 = QLabel('Select the time range after the\n first initial packet is found(sec)')
-        label4.setAlignment(Qt.AlignCenter)
+        right_time_label = QLabel('Select the time range after the\n first initial packet is found(sec)')
+        right_time_label.setAlignment(Qt.AlignCenter)
 
         self.left_spinbox = QDoubleSpinBox()
         self.left_spinbox.setSingleStep(.1)
@@ -60,14 +72,14 @@ class MainApp(QMainWindow):
         self.right_spinbox = QSpinBox()
         self.right_spinbox.setMinimum(1)
 
-        label5 = QLabel('Click the annotate button once\nyou are ready to comment the pcapng file')
-        label5.setAlignment(Qt.AlignCenter)
+        annotate_label = QLabel('Click the annotate button once\nyou are ready to comment the pcapng file')
+        annotate_label.setAlignment(Qt.AlignCenter)
 
         annotate_button = QPushButton('Annotate')
         annotate_button.clicked.connect(self.on_annotate_button_clicked)
 
-        label6 = QLabel('To open up wireshark click the button below')
-        label6.setAlignment(Qt.AlignCenter)
+        wireshark2_label = QLabel('To open up wireshark click the button below')
+        wireshark2_label.setAlignment(Qt.AlignCenter)
 
         activate_wireshark_button = QPushButton('Run Wireshark')
         activate_wireshark_button.clicked.connect(self.on_activate_wireshark_button_clicked)
@@ -75,28 +87,34 @@ class MainApp(QMainWindow):
         layout1.addWidget(json_button)
         layout1.addWidget(self.json_file)
 
-        layout2.addWidget(wireshark_button)
-        layout2.addWidget(self.wireshark_file)
+        layout2.addWidget(additional_json_button)
+        layout2.addWidget(self.additional_json_file)
 
-        layout3.addWidget(label3)
-        layout3.addWidget(label4)
+        layout3.addWidget(wireshark_button)
+        layout3.addWidget(self.wireshark_file)
 
-        layout4.addWidget(self.left_spinbox)
-        layout4.addWidget(self.right_spinbox)
+        layout4.addWidget(left_time_label)
+        layout4.addWidget(right_time_label)
+
+        layout5.addWidget(self.left_spinbox)
+        layout5.addWidget(self.right_spinbox)
         
-        mainlayout.addWidget(label1)
+        mainlayout.addWidget(json_label)
         mainlayout.addLayout(layout1)
         mainlayout.addStretch()
-        mainlayout.addWidget(label2)
+        mainlayout.addWidget(additional_json_label)
         mainlayout.addLayout(layout2)
         mainlayout.addStretch()
+        mainlayout.addWidget(wireshark_label)
         mainlayout.addLayout(layout3)
-        mainlayout.addLayout(layout4)
         mainlayout.addStretch()
-        mainlayout.addWidget(label5)
+        mainlayout.addLayout(layout4)
+        mainlayout.addLayout(layout5)
+        mainlayout.addStretch()
+        mainlayout.addWidget(annotate_label)
         mainlayout.addWidget(annotate_button)
         mainlayout.addStretch()
-        mainlayout.addWidget(label6)
+        mainlayout.addWidget(wireshark2_label)
         mainlayout.addWidget(activate_wireshark_button)
         mainlayout.addStretch()
         mainwidget.setLayout(mainlayout)
@@ -107,6 +125,12 @@ class MainApp(QMainWindow):
         file_chosen = JSONFileDialog().json_dialog()
         self.json_file.setText(file_chosen)
         logging.info('on_json_button_clicked(): Complete')
+
+    def on_additional_json_button_clicked(self):
+        logging.info('on_additional_json_button_clicked(): Instantiated')
+        file_chosen = JSONFileDialog().json_dialog()
+        self.additional_json_file.setText(file_chosen)
+        logging.info('on_additional_json_button_clicked(): Complete')
 
     def on_wireshark_button_clicked(self):
         logging.info('on_wireshark_button_clicked(): Instantiated')
