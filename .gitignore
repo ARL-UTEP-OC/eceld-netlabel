@@ -1,3 +1,5 @@
 # Files to be ignored
 snoopyData.JSON
 test.pcapng
+
+*.pyc
