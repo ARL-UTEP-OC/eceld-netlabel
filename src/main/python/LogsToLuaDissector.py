@@ -1,7 +1,6 @@
 import logging
 import os
 import sys, traceback
-import subprocess
 import json
 import time
 from calendar import timegm
@@ -50,8 +49,8 @@ def readJSONData(file_loc=None):
             for p in data:
                 if "content" not in p:
                     p['content'] = "Event Occured"
-                logging.debug("readJSONData(): appending: " + (str(p['content']) + str(timegm(time.strptime(str(p['start']), "%Y-%m-%dT%H:%M:%S")) ) ))
-                eventlist.append( (str(p['content']),timegm(time.strptime(str(p['start']), "%Y-%m-%dT%H:%M:%S"))) )
+                logging.debug("readJSONData(): appending: " + (str(p['content']) + " " + str(p['start']) + " " + str(timegm(time.strptime(str(p['start']), "%Y-%m-%dT%H:%M:%S")) ) ))
+                eventlist.append( (str(p['content']),str(p['start']), timegm(time.strptime(str(p['start']), "%Y-%m-%dT%H:%M:%S"))) )
         logging.info("readJSONData(): File reading complete")
         return (eventlist)
 
@@ -61,28 +60,6 @@ def readJSONData(file_loc=None):
         traceback.print_exception(exc_type, exc_value, exc_traceback)
         exit()		
         
-#Use editcap to add a comment to the frame numbers (within .1 second before and 1 second after) based on the data within the snoopy log.
-def injectComment(event, framenums, file_loc=None):
-    logging.debug("injectComment(): instantiated")
-    if file_loc:
-        input_file = file_loc
-    else:
-        input_file = os.path.join(cwd, '2019_06_11Traffic_Curation_files/III_pivoting_capture_annotated_v2.pcapng')
-    output_file = os.path.join(cwd, 'auto_annotation.pcapng')
-    #insert for loop here to do all the frames 
-    logging.info("injectComment(): Adding comment to frames")
-    for frameNum in framenums:
-        comment = "start\ncmd: " + event
-        cmd = "editcap " + input_file + " " + output_file + " -a " + frameNum + ":\"" + comment + "\""
-        logging.debug("injectComment(): running command: " + cmd)
-        if sys.platform == "linux" or sys.platform == "linux2":
-            output = subprocess.check_output(shlex.split(cmd), encoding="utf-8")
-        else: 
-            output = subprocess.check_output(cmd, encoding="utf-8")
-        logging.debug("injectComment(): process output: " + str(output))
-        logging.debug("injectComment(): Injecting comment Event: " + comment + "FrameNum: " + frameNum)
-
-    logging.info("injectComment(): Completed adding comments to frames")
 
 def eventsToDissector(eventlist, dissector_name, start_threshold=0.1, end_threshold=1, template_filename=None, ofilename=None):
     logging.debug("eventsToDissector(): Instantiated")
@@ -92,12 +69,13 @@ def eventsToDissector(eventlist, dissector_name, start_threshold=0.1, end_thresh
         ofilename = "output-dissectors/" + dissector_name + ".lua"
     if ofilename.split(".")[-1] != "lua":
         ofilename += ".lua"
+    
     eventlist_thresh = []
     #format the event and time in an easier to read format for the template
-    for (event, time) in eventlist:
-        start_time = time - start_threshold
-        end_time = time + end_threshold
-        eventlist_thresh.append((start_time, end_time, event))
+    for (event, time_date_tod, time_epoch) in eventlist:
+        start_time = float(time_epoch) - start_threshold
+        end_time = float(time_epoch) + end_threshold
+        eventlist_thresh.append((start_time, end_time, time_date_tod, event))
  
     try:
         template_basename = os.path.basename(template_filename)
@@ -108,12 +86,13 @@ def eventsToDissector(eventlist, dissector_name, start_threshold=0.1, end_thresh
         logging.debug("eventsToDissector(): rendering " + ofilename + " using template: " + template_filename)
         
         with open(ofilename, "w") as out:
-            out.write(env.get_template(template_basename).render(jinja_dissector_name = dissector_name, jinja_eventlist_thresh=eventlist_thresh))
-            
             #create the string from the template using the dissector_name, events, time, and thresholds
-        
-        logging.info("Done creating dissector: " + ofilename)
-    
+            out.write(env.get_template(template_basename).render(jinja_dissector_name = dissector_name, jinja_eventlist_thresh=eventlist_thresh))            
+
+        logging.info("Done creating dissector: " + os.path.abspath(ofilename))
+        #return the (possibly modified) filename
+        return ofilename
+
     except Exception:
         exc_type, exc_value, exc_traceback = sys.exc_info()
         logging.error("eventsToDissector(): An error occured ")
@@ -124,12 +103,14 @@ if __name__=="__main__":
     logging.basicConfig(format='%(levelname)s:%(message)s', level = logging.DEBUG)
     logging.info("main(): Instantiated")
     filelist = getJSONFiles("/root/git/eceld-netlabel/sample-logs/")
-    fileEvents = {}
+    file_events = {}
+    dissector_filenames = []
     for filename in filelist:
         #save the filename as a key, all the events (event, time) as the value
-        fileEvents = readJSONData(filename)
+        file_events = readJSONData(filename)
         base = os.path.basename(filename)
         basenoext = os.path.splitext(base)[0]
-
-        eventsToDissector(fileEvents, dissector_name=basenoext, ofilename="/root/git/eceld-netlabel/output-dissectors/"+basenoext, template_filename="/root/git/eceld-netlabel/templates/framenum.jnj2")
+        dissector_filename = eventsToDissector(file_events, dissector_name=basenoext, ofilename="/root/git/eceld-netlabel/output-dissectors/"+basenoext, template_filename="/root/git/eceld-netlabel/templates/framenum.jnj2", start_threshold=0, end_threshold=2)
+        dissector_filenames.append(dissector_filename)
+    logging.debug("main(): Dissector Files Created: " + str(dissector_filenames))
     logging.info("main(): Complete")

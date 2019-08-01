@@ -1,33 +1,24 @@
 -- {{jinja_dissector_name}} frame number-based postdissector
 -- declare Fields to be read
-ip_src_f = Field.new("ip.src")
-ip_dst_f = Field.new("ip.dst")
-tcp_src_f = Field.new("tcp.srcport")
-tcp_dst_f = Field.new("tcp.dstport")
 -- declare our (pseudo) protocol
 {{jinja_dissector_name}}_proto = Proto("{{jinja_dissector_name}}","{{jinja_dissector_name}} Log")
 -- create the fields for our "protocol"
-src_F = ProtoField.string("{{jinja_dissector_name}}.src","Source")
-dst_F = ProtoField.string("{{jinja_dissector_name}}.dst","Destination")
-conv_F = ProtoField.string("{{jinja_dissector_name}}.conv","Conversation","A Conversation")
+timestamp_F = ProtoField.string("{{jinja_dissector_name}}.timestamp","Original Event Timestamp")
+eventdata_F = ProtoField.string("{{jinja_dissector_name}}.data","Data")
+
 -- add the field to the protocol
-{{jinja_dissector_name}}_proto.fields = {src_F, dst_F, conv_F}
+{{jinja_dissector_name}}_proto.fields = {timestamp_F, eventdata_F}
+
 -- create a function to "postdissect" each frame
 function {{jinja_dissector_name}}_proto.dissector(buffer,pinfo,tree)
-    -- obtain the current values the protocol fields
-    local tcp_src = tcp_src_f()
-    local tcp_dst = tcp_dst_f()
-    local ip_src = ip_src_f()
-    local ip_dst = ip_dst_f()
-    if tcp_src then
+    -- add the data based on timestamps
+    {%- for event in range(0, jinja_eventlist_thresh|length) %}
+    if pinfo.abs_ts >= {{jinja_eventlist_thresh[event][0]}} and pinfo.abs_ts <= {{jinja_eventlist_thresh[event][1]}} then
        local subtree = tree:add({{jinja_dissector_name}}_proto,"{{jinja_dissector_name}} Log")
-       local src = tostring(ip_src) .. ":" .. tostring(tcp_src)
-       local dst = tostring(ip_dst) .. ":" .. tostring(tcp_dst)
-       local conv = src  .. "->" .. dst
-       subtree:add(src_F,src)
-       subtree:add(dst_F,dst)
-       subtree:add(conv_F,conv)
+       subtree:add(tostring("Original Timestamp: "),tostring("{{jinja_eventlist_thresh[event][2]}}"))
+       subtree:add(tostring("Log Data: "), tostring("{{jinja_eventlist_thresh[event][3]}}"))
     end
+    {%- endfor %}
 end
 -- register our protocol as a postdissector
 register_postdissector({{jinja_dissector_name}}_proto)
