@@ -64,7 +64,7 @@ def readJSONData(file_loc=None):
 def eventsToDissector(eventlist, dissector_name, start_threshold=0.1, end_threshold=1, template_filename=None, ofilename=None):
     logging.debug("eventsToDissector(): Instantiated")
     if template_filename == None:
-        template_filename = "templates/framenum.jnj2"
+        template_filename = "templates/timebased.jnj2"
     if ofilename == None:
         ofilename = "output-dissectors/" + dissector_name + ".lua"
     if ofilename.split(".")[-1] != "lua":
@@ -110,7 +110,7 @@ if __name__=="__main__":
         file_events = readJSONData(filename)
         base = os.path.basename(filename)
         basenoext = os.path.splitext(base)[0]
-        dissector_filename = eventsToDissector(file_events, dissector_name=basenoext, ofilename="/root/git/eceld-netlabel/output-dissectors/"+basenoext, template_filename="/root/git/eceld-netlabel/templates/framenum.jnj2", start_threshold=0, end_threshold=2)
+        dissector_filename = eventsToDissector(file_events, dissector_name=basenoext, ofilename="/root/git/eceld-netlabel/output-dissectors/"+basenoext, template_filename="/root/git/eceld-netlabel/templates/timebased.jnj2", start_threshold=0, end_threshold=2)
         dissector_filenames.append(dissector_filename)
     logging.debug("main(): Dissector Files Created: " + str(dissector_filenames))
     logging.info("main(): Complete")

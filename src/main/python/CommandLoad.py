@@ -34,7 +34,7 @@ class CommandLoad(QThread):
             file_events = readJSONData(filename)
             base = os.path.basename(filename)
             basenoext = os.path.splitext(base)[0]
-            dissector_filename = eventsToDissector(file_events, dissector_name=basenoext, ofilename="output-dissectors/"+basenoext, template_filename="templates/framenum.jnj2", start_threshold=0, end_threshold=2)
+            dissector_filename = eventsToDissector(file_events, dissector_name=basenoext, ofilename="output-dissectors/"+basenoext, template_filename="templates/timebased.jnj2", start_threshold=0, end_threshold=2)
             self.completed_dissector_filenames.append(dissector_filename)
             #emit when file done reading
             self.signal.emit()
