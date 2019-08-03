@@ -6,6 +6,7 @@ from PyQt5 import QtGui
 from PyQt5.QtCore import *
 from PyQt5.QtWidgets import QMainWindow, QWidget, QVBoxLayout, QHBoxLayout, QLabel, QPushButton, QLineEdit, QProgressBar, QDoubleSpinBox, QSpinBox
 
+#from ECELDClient import ECELDClient
 
 from GUI.Dialogs.JSONFolderDialog import JSONFolderDialog
 from GUI.Dialogs.WiresharkFileDialog import WiresharkFileDialog
@@ -20,129 +21,96 @@ class MainApp(QMainWindow):
     def __init__(self):
         logging.info("MainApp(): Instantiated")
         super(MainApp, self).__init__()
-        self.setWindowTitle('ECEL Automatic Net Label')
+        self.setWindowTitle('Traffic Annotation Workflow')
         mainwidget = QWidget()
         self.setCentralWidget(mainwidget)
         mainlayout = QVBoxLayout()
-        layout1 = QHBoxLayout()
-        layout2 = QHBoxLayout()
-        layout3 = QHBoxLayout()
-        layout4 = QHBoxLayout()
+        log_start_layout = QHBoxLayout()
+        log_stop_layout = QHBoxLayout()
+        wireshark_annotate_layout = QHBoxLayout()
+        validate_layout = QHBoxLayout()
 
-        label1 = QLabel('Step I. Select the folder with the log files')
-        label1.setFont(QtGui.QFont("Times",weight=QtGui.QFont.Bold))
-        label1.setAlignment(Qt.AlignCenter)
+        log_start_label = QLabel('Step I. Start Logging Network Data and Actions')
+        log_start_label.setFont(QtGui.QFont("Times",weight=QtGui.QFont.Bold))
+        log_start_label.setAlignment(Qt.AlignCenter)
 
-        json_button = QPushButton('Log Directory')
-        json_button.clicked.connect(self.on_json_button_clicked)
+        self.log_start_button = QPushButton('Logger Start')
+        self.log_start_button.clicked.connect(self.on_log_start_button_clicked)
 
-        self.json_file = QLineEdit()
-        self.json_file.setText('Please select a folder with log files')
-        self.json_file.setAlignment(Qt.AlignLeft)
-        self.json_file.setReadOnly(True)
+        log_stop_label = QLabel('Step II. Stop Logging Network Data and Actions')
+        log_stop_label.setFont(QtGui.QFont("Times",weight=QtGui.QFont.Bold))
+        log_stop_label.setAlignment(Qt.AlignCenter)
 
-        label2 = QLabel('Step II. Select the Wireshark file')
-        label2.setFont(QtGui.QFont("Times",weight=QtGui.QFont.Bold))
-        label2.setAlignment(Qt.AlignCenter)
+        self.log_stop_button = QPushButton('Logger Stop')
+        self.log_stop_button.clicked.connect(self.on_log_stop_button_clicked)
 
-        self.wireshark_button = QPushButton('Wireshark file')
-        self.wireshark_button.clicked.connect(self.on_wireshark_button_clicked)
+        wireshark_annotate_label = QLabel('Step III. Use Wireshark to Add Comments to Logs')
+        wireshark_annotate_label.setFont(QtGui.QFont("Times",weight=QtGui.QFont.Bold))
+        wireshark_annotate_label.setAlignment(Qt.AlignCenter)
 
-        self.wireshark_file = QLineEdit()
-        self.wireshark_file.setText('Please select a pcap or pcapng file')
-        self.wireshark_file.setAlignment(Qt.AlignLeft)
-        self.wireshark_file.setReadOnly(True)
+        self.wireshark_annotate_button = QPushButton('Run Wireshark')
+        self.wireshark_annotate_button.clicked.connect(self.on_wireshark_annotate_button_clicked)
+        self.wireshark_annotate_button.setEnabled(False)
 
-        label3 = QLabel('Step III. Indicate time range before the\n first initial packet is found(sec)')
-        label3.setFont(QtGui.QFont("Times",weight=QtGui.QFont.Bold))
-        label3.setAlignment(Qt.AlignCenter)
+        validate_label = QLabel('Step IV. Find Incidents in Another Network File Based on Comments')
+        validate_label.setFont(QtGui.QFont("Times",weight=QtGui.QFont.Bold))
+        validate_label.setAlignment(Qt.AlignCenter)
 
-        label4 = QLabel('Step IV. Indicate the time range after the\n first initial packet is found(sec)')
-        label4.setAlignment(Qt.AlignCenter)
-        label4.setFont(QtGui.QFont("Times",weight=QtGui.QFont.Bold))
+        self.wireshark_file_button = QPushButton('Select File')
+        self.wireshark_file_button.clicked.connect(self.on_wireshark_file_button_clicked)
+        self.wireshark_file_button.setEnabled(False)
 
-        self.left_spinbox = QDoubleSpinBox()
-        self.left_spinbox.setSingleStep(0.1)
-        self.left_spinbox.setMinimum(0)
-        self.left_spinbox.setValue(0)
-        self.left_spinbox.setEnabled(False)
+        self.wireshark_file_lineedit = QLineEdit()
+        self.wireshark_file_lineedit.setText('Please select a pcap or pcapng file')
+        self.wireshark_file_lineedit.setAlignment(Qt.AlignLeft)
+        self.wireshark_file_lineedit.setReadOnly(True)
 
-        self.right_spinbox = QDoubleSpinBox()
-        self.right_spinbox.setSingleStep(0.1)
-        self.right_spinbox.setMinimum(0.0)
-        self.right_spinbox.setValue(2.0)
-        self.right_spinbox.setEnabled(False)
+        self.validate_button = QPushButton('Find Incidents')
+        self.validate_button.clicked.connect(self.on_validate_button_clicked)
+        self.validate_button.setEnabled(False)
 
-        label5 = QLabel('Step V. Click the generate button to\ninject log data into the Wireshark file')
-        label5.setFont(QtGui.QFont("Times",weight=QtGui.QFont.Bold))
-        label5.setAlignment(Qt.AlignCenter)
+        log_start_layout.addWidget(self.log_start_button)
+        log_stop_layout.addWidget(self.log_stop_button)
+        wireshark_annotate_layout.addWidget(self.wireshark_annotate_button)
 
-        self.annotate_button = QPushButton('Inject Data')
-        self.annotate_button.setEnabled(False)
-        self.annotate_button.clicked.connect(self.on_annotate_button_clicked)
-
-        label6 = QLabel('Step VI. Open the modified Wireshark file')
-        label6.setFont(QtGui.QFont("Times",weight=QtGui.QFont.Bold))
-        label6.setAlignment(Qt.AlignCenter)
-
-        self.activate_wireshark_button = QPushButton('Open Wireshark File')
-        self.activate_wireshark_button.setEnabled(False)
-        self.activate_wireshark_button.clicked.connect(self.on_activate_wireshark_button_clicked)
-
-        layout1.addWidget(json_button)
-        layout1.addWidget(self.json_file)
-
-        layout2.addWidget(self.wireshark_button)
-        layout2.addWidget(self.wireshark_file)
-
-        layout3.addWidget(label3)
-        layout3.addWidget(label4)
-
-        layout4.addWidget(self.left_spinbox)
-        layout4.addWidget(self.right_spinbox)
+        validate_layout.addWidget(self.wireshark_file_button)
+        validate_layout.addWidget(self.wireshark_file_lineedit)
         
-        mainlayout.addWidget(label1)
-        mainlayout.addLayout(layout1)
+        mainlayout.addWidget(log_start_label)
+        mainlayout.addLayout(log_start_layout)
         mainlayout.addStretch()
-        mainlayout.addWidget(label2)
-        mainlayout.addLayout(layout2)
+        mainlayout.addWidget(log_stop_label)
+        mainlayout.addLayout(log_stop_layout)
         mainlayout.addStretch()
-        mainlayout.addLayout(layout3)
-        mainlayout.addLayout(layout4)
+        mainlayout.addWidget(wireshark_annotate_label)
+        mainlayout.addLayout(wireshark_annotate_layout)
         mainlayout.addStretch()
-        mainlayout.addWidget(label5)
-        mainlayout.addWidget(self.annotate_button)
-        mainlayout.addStretch()
-        mainlayout.addWidget(label6)
-        mainlayout.addWidget(self.activate_wireshark_button)
+        mainlayout.addWidget(validate_label)
+        mainlayout.addLayout(validate_layout)
+        mainlayout.addWidget(self.validate_button)
         mainlayout.addStretch()
         mainwidget.setLayout(mainlayout)
         self.dissectors_generated = []
+        #self.eclient = ECELDClient.ECELDClient()
         logging.info("MainWindow(): Complete")
     
-    def on_json_button_clicked(self):
-        logging.info('on_json_button_clicked(): Instantiated')
-        file_chosen = JSONFolderDialog().json_dialog()
-        if file_chosen != "":
-            self.json_file.setText(file_chosen)
-        if self.json_file.text() != "Please select a folder" and self.wireshark_file.text() != "Please select a pcap or pcapng file":
-            self.annotate_button.setEnabled(True)
-            self.left_spinbox.setEnabled(True)
-            self.right_spinbox.setEnabled(True)
-            self.activate_wireshark_button.setEnabled(False)
-        logging.info('on_json_button_clicked(): Complete')
+    def on_log_start_button_clicked(self):
+        logging.info('on_log_start_button_clicked(): Instantiated')
+        self.eclient.startCollectors()
+        self.log_start_button.setEnabled(False)
+        self.log_stop_button.setEnabled(True)
+        self.wireshark_annotate_button.setEnabled(False)
+        self.validate_button.setEnabled(False)
+        logging.info('on_log_start_button_clicked(): Complete')
 
-    def on_wireshark_button_clicked(self):
-        logging.info('on_wireshark_button_clicked(): Instantiated')
-        file_chosen = WiresharkFileDialog().wireshark_dialog()
-        if file_chosen != "":
-            self.wireshark_file.setText(file_chosen)
-        if self.json_file.text() != "Please select a folder" and self.wireshark_file.text() != "Please select a pcap or pcapng file":
-            self.annotate_button.setEnabled(True)
-            self.left_spinbox.setEnabled(True)
-            self.right_spinbox.setEnabled(True)
-            self.activate_wireshark_button.setEnabled(False)
-        logging.info('on_wireshark_button_clicked(): Complete')
+    def on_log_stop_button_clicked(self):
+        logging.info('on_log_stop_button_clicked(): Instantiated')
+        self.eclient.stopCollectors()
+        self.log_start_button.setEnabled(True)
+        self.log_stop_button.setEnabled(False)
+        self.wireshark_annotate_button.setEnabled(True)
+        self.validate_button.setEnabled(False)
+        logging.info('on_log_stop_button_clicked(): Complete')
 
     def on_annotate_button_clicked(self):
         logging.info('on_annotate_button_clicked(): Instantiated')
@@ -170,13 +138,39 @@ class MainApp(QMainWindow):
             QMessageBox.alert(self, "Processing Complete", "No files processed")
         else: 
             QMessageBox.about(self, "Processing Complete", output_dissected)
-            self.activate_wireshark_button.setEnabled(True)
+            self.log_start_button.setEnabled(True)
+            self.log_stop_button.setEnabled(True)
+            self.wireshark_annotate_button.setEnabled(True)
+            self.validate_button.setEnabled(True)
 
-    def on_activate_wireshark_button_clicked(self):
+    def on_wireshark_annotate_button_clicked(self):
         logging.info('on_activate_wireshark_button_clicked(): Instantiated')
-        self.wireshark_thread = WiresharkWindow(lua_scripts=self.dissectors_generated, pcap_filename=self.wireshark_file.text())
-        self.wireshark_thread.start()
+
+        #parse, export, and then cp stuff where it's needed
+        self.eclient.exportData(path="/tmp/logdata/")
+        #self.wireshark_thread = WiresharkWindow(lua_scripts=self.dissectors_generated, pcap_filename=self.wireshark_file.text())
+        #self.wireshark_thread.start()
+        self.log_start_button.setEnabled(True)
+        self.log_stop_button.setEnabled(False)
+        self.wireshark_annotate_button.setEnabled(True)
+        self.validate_button.setEnabled(True)
         logging.info('on_activate_wireshark_button_clicked(): Complete')
+
+    def on_wireshark_file_button_clicked(self):
+        logging.info('on_wireshark_file_button_clicked(): Instantiated')
+        file_chosen = WiresharkFileDialog().wireshark_dialog()
+        if file_chosen != "":
+            self.wireshark_file_lineedit.setText(file_chosen)
+        if self.wireshark_file_lineedit.text() != "Please select a folder" and self.wireshark_file.text() != "Please select a pcap or pcapng file":
+            self.log_start_button.setEnabled(True)
+            self.log_stop_button.setEnabled(True)
+            self.wireshark_annotate_button.setEnabled(True)
+            self.validate_button.setEnabled(True)
+        logging.info('on_wireshark_file_button_clicked(): Complete')
+    
+    def on_validate_button_clicked(self):
+        pass
+
 
 if __name__ == '__main__':
     logging.info("main(): Instantiated")
