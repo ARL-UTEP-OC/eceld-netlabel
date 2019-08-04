@@ -60,12 +60,13 @@ def readJSONData(file_loc=None):
         traceback.print_exception(exc_type, exc_value, exc_traceback)
         exit()		
         
-
 def eventsToDissector(eventlist, dissector_name, start_threshold=0.1, end_threshold=1, template_filename=None, ofilename=None):
     logging.debug("eventsToDissector(): Instantiated")
     if template_filename == None:
         template_filename = "templates/timebased.jnj2"
     if ofilename == None:
+        if os.path.exists("output-dissectors") == False:
+            os.makedirs("output-dissectors")
         ofilename = "output-dissectors/" + dissector_name + ".lua"
     if ofilename.split(".")[-1] != "lua":
         ofilename += ".lua"

@@ -7,10 +7,9 @@ class CommandLoad(QThread):
     signal = pyqtSignal()
     signal2 = pyqtSignal()
 
-    def __init__(self, log_directory, pcap_filename, beforePacketTime = 0, afterPacketTime = 2):
+    def __init__(self, log_directory, beforePacketTime = 0, afterPacketTime = 2):
         logging.info('CommandLoad(): Instantiated')
         QThread.__init__(self)
-        self.wireshark_file = pcap_filename
         self.beforePacketTime = beforePacketTime
         self.afterPacketTime = afterPacketTime
         #get files in directory
@@ -29,6 +28,10 @@ class CommandLoad(QThread):
         
         file_events = {}
         self.completed_dissector_filenames = []
+
+        if os.path.exists("output-dissectors") == False:
+            os.makedirs("output-dissectors")
+
         for filename in self.filelist:
             #save the filename as a key, all the events (event, time) as the value
             file_events = readJSONData(filename)

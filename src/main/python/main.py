@@ -1,12 +1,14 @@
 import logging
 import sys
-import os
+import os, traceback
+import shutil
+import pprint
 from fbs_runtime.application_context.PyQt5 import ApplicationContext
 from PyQt5 import QtGui
 from PyQt5.QtCore import *
 from PyQt5.QtWidgets import QMainWindow, QWidget, QVBoxLayout, QHBoxLayout, QLabel, QPushButton, QLineEdit, QProgressBar, QDoubleSpinBox, QSpinBox
 
-#from ECELDClient import ECELDClient
+from ECELDClient import ECELDClient
 
 from GUI.Dialogs.JSONFolderDialog import JSONFolderDialog
 from GUI.Dialogs.WiresharkFileDialog import WiresharkFileDialog
@@ -14,10 +16,14 @@ from GUI.Dialogs.ProgressBarWindow import ProgressBarWindow
 from LogsToLuaDissector import getJSONFiles, readJSONData, eventsToDissector
 from CommandLoad import CommandLoad
 from WiresharkWindow import WiresharkWindow
+import time
 
 from PyQt5.QtWidgets import QMessageBox
 
 class MainApp(QMainWindow):
+    RAW_DATA_EXPORT_PATH = "/tmp/logdata/"
+    OUTDATA_PATH = "/tmp/logdata/out/"
+    OUTDATA_PCAP_FILENAME = "merged.pcapng"
     def __init__(self):
         logging.info("MainApp(): Instantiated")
         super(MainApp, self).__init__()
@@ -43,6 +49,7 @@ class MainApp(QMainWindow):
 
         self.log_stop_button = QPushButton('Logger Stop')
         self.log_stop_button.clicked.connect(self.on_log_stop_button_clicked)
+        self.log_stop_button.setEnabled(False)
 
         wireshark_annotate_label = QLabel('Step III. Use Wireshark to Add Comments to Logs')
         wireshark_annotate_label.setFont(QtGui.QFont("Times",weight=QtGui.QFont.Bold))
@@ -64,6 +71,7 @@ class MainApp(QMainWindow):
         self.wireshark_file_lineedit.setText('Please select a pcap or pcapng file')
         self.wireshark_file_lineedit.setAlignment(Qt.AlignLeft)
         self.wireshark_file_lineedit.setReadOnly(True)
+        self.wireshark_file_lineedit.setEnabled(False)
 
         self.validate_button = QPushButton('Find Incidents')
         self.validate_button.clicked.connect(self.on_validate_button_clicked)
@@ -91,7 +99,7 @@ class MainApp(QMainWindow):
         mainlayout.addStretch()
         mainwidget.setLayout(mainlayout)
         self.dissectors_generated = []
-        #self.eclient = ECELDClient.ECELDClient()
+        self.eclient = ECELDClient.ECELDClient()
         logging.info("MainWindow(): Complete")
     
     def on_log_start_button_clicked(self):
@@ -100,28 +108,61 @@ class MainApp(QMainWindow):
         self.log_start_button.setEnabled(False)
         self.log_stop_button.setEnabled(True)
         self.wireshark_annotate_button.setEnabled(False)
+        self.wireshark_file_button.setEnabled(False)
+        self.wireshark_file_lineedit.setEnabled(False)
         self.validate_button.setEnabled(False)
         logging.info('on_log_start_button_clicked(): Complete')
 
     def on_log_stop_button_clicked(self):
         logging.info('on_log_stop_button_clicked(): Instantiated')
         self.eclient.stopCollectors()
-        self.log_start_button.setEnabled(True)
-        self.log_stop_button.setEnabled(False)
-        self.wireshark_annotate_button.setEnabled(True)
-        self.validate_button.setEnabled(False)
-        logging.info('on_log_stop_button_clicked(): Complete')
+        self.eclient.parseDataAll()
+        self.eclient.exportData("/tmp/logdata")
+        #get the most recent exported directory:
+        latestlogsdir = ""
+        mydir = os.path.join(MainApp.RAW_DATA_EXPORT_PATH)
+        latestlogdirs = self.getSortedInDirs(mydir, dircontains="export")
+        latestlogdir = ""
+        if len(latestlogdirs) > 0:
+            #get the latest
+            latestlogdir = latestlogdirs[-1]
+        else:
+            logging.error("No export log file directory found in path: " + MainApp.RAW_DATA_EXPORT_PATH)
+            return
+        try:
+            if os.path.exists(MainApp.OUTDATA_PATH) == False:
+                os.makedirs(MainApp.OUTDATA_PATH)
+        except:
+            logging.error("on_log_stop_button_clicked(): An error occured when trying create directory")
+            exc_type, exc_value, exc_traceback = sys.exc_info()
+            traceback.print_exception(exc_type, exc_value, exc_traceback)
 
-    def on_annotate_button_clicked(self):
-        logging.info('on_annotate_button_clicked(): Instantiated')
-        self.command_thread = CommandLoad(self.json_file.text(), self.wireshark_file.text(), self.left_spinbox.value(), self.right_spinbox.value())
+        try:
+            #cp all JSON files to out dir
+            snoopyFile = os.path.join(latestlogdir,"parsed","snoopy","snoopyData.JSON")
+            keystrokesFile = os.path.join(latestlogdir,"parsed","pykeylogger","detailed_log","keystrokeData.JSON")
+            if os.path.exists(snoopyFile):
+                shutil.copy(snoopyFile,os.path.join(MainApp.OUTDATA_PATH,"SystemCalls.JSON"))
+            if os.path.exists(keystrokesFile):
+                shutil.copy(keystrokesFile,os.path.join(MainApp.OUTDATA_PATH,"Keypresses.JSON"))
+            #cp merged pcap to dir
+            pcapFile = os.path.join(latestlogdir,"raw","tshark","merged.pcapng")
+            if os.path.exists(pcapFile):
+                shutil.copy(pcapFile,os.path.join(MainApp.OUTDATA_PATH,MainApp.OUTDATA_PCAP_FILENAME))
+        except:
+            logging.error("on_log_stop_button_clicked(): An error occured when trying to copy log files")
+            exc_type, exc_value, exc_traceback = sys.exc_info()
+            traceback.print_exception(exc_type, exc_value, exc_traceback)
+
+        #create lua dissectors based on log data and store results into outdir
+        self.command_thread = CommandLoad(log_directory=MainApp.OUTDATA_PATH)
         self.command_thread.signal.connect(self.update_progress_bar)
         self.command_thread.signal2.connect(self.thread_finish)
         self.progress_window = ProgressBarWindow(self.command_thread.getLoadCount())
         self.progress_window.show()
-
         self.command_thread.start()
-        logging.info('on_annotate_button_clicked(): Complete')
+
+        logging.info('on_log_stop_button_clicked(): Complete')
 
     def update_progress_bar(self):
         self.progress_window.update_progress()
@@ -139,21 +180,23 @@ class MainApp(QMainWindow):
         else: 
             QMessageBox.about(self, "Processing Complete", output_dissected)
             self.log_start_button.setEnabled(True)
-            self.log_stop_button.setEnabled(True)
+            self.log_stop_button.setEnabled(False)
             self.wireshark_annotate_button.setEnabled(True)
-            self.validate_button.setEnabled(True)
+            self.wireshark_file_button.setEnabled(False)
+            self.wireshark_file_lineedit.setEnabled(False)
+            self.validate_button.setEnabled(False)
 
     def on_wireshark_annotate_button_clicked(self):
         logging.info('on_activate_wireshark_button_clicked(): Instantiated')
-
-        #parse, export, and then cp stuff where it's needed
-        self.eclient.exportData(path="/tmp/logdata/")
-        #self.wireshark_thread = WiresharkWindow(lua_scripts=self.dissectors_generated, pcap_filename=self.wireshark_file.text())
-        #self.wireshark_thread.start()
+        #open wireshark using the captured pcap and the generated lua files
+        self.wireshark_thread = WiresharkWindow(lua_scripts=self.dissectors_generated, pcap_filename=os.path.join(MainApp.OUTDATA_PATH,MainApp.OUTDATA_PCAP_FILENAME))
+        self.wireshark_thread.start()
         self.log_start_button.setEnabled(True)
         self.log_stop_button.setEnabled(False)
         self.wireshark_annotate_button.setEnabled(True)
-        self.validate_button.setEnabled(True)
+        self.wireshark_file_button.setEnabled(True)
+        self.wireshark_file_lineedit.setEnabled(True)
+        self.validate_button.setEnabled(False)
         logging.info('on_activate_wireshark_button_clicked(): Complete')
 
     def on_wireshark_file_button_clicked(self):
@@ -161,16 +204,28 @@ class MainApp(QMainWindow):
         file_chosen = WiresharkFileDialog().wireshark_dialog()
         if file_chosen != "":
             self.wireshark_file_lineedit.setText(file_chosen)
-        if self.wireshark_file_lineedit.text() != "Please select a folder" and self.wireshark_file.text() != "Please select a pcap or pcapng file":
+        if self.wireshark_file_lineedit.text() != "Please select a pcap or pcapng file":
             self.log_start_button.setEnabled(True)
-            self.log_stop_button.setEnabled(True)
+            self.log_stop_button.setEnabled(False)
             self.wireshark_annotate_button.setEnabled(True)
+            self.wireshark_file_button.setEnabled(True)
+            self.wireshark_file_lineedit.setEnabled(True)
             self.validate_button.setEnabled(True)
         logging.info('on_wireshark_file_button_clicked(): Complete')
     
     def on_validate_button_clicked(self):
         pass
 
+    def getSortedInDirs(self, path, dircontains=""):
+        logging.info('getSortedInDirs(): Instantiated')
+        name_list = os.listdir(path)
+        dirs = []
+        for name in name_list:
+            fullpath = os.path.join(path,name)
+            if os.path.isdir(fullpath) and (dircontains in name):
+                dirs.append(fullpath)
+        logging.info('getSortedInDirs(): Completed')
+        return dirs
 
 if __name__ == '__main__':
     logging.info("main(): Instantiated")
