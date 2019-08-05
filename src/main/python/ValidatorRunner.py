@@ -2,21 +2,18 @@ import logging
 import subprocess
 import shlex
 import sys
+import os
 from PyQt5.QtCore import QThread
 
 class ValidatorRunner(QThread):
-    VALIDATOR_PATH = "/root/git/eceld-traffic-validator/"
+    VALIDATOR_PATH = "/root/git/eceld-traffic-validator/scripts/"
     VALIDATOR_FILENAME = "validate_train.sh"
 
-    def __init__(self, pcap_filename=None):
+    def __init__(self, commented_pcap_filename, validate_pcap_filename):
         logging.info('ValidatorRunner(): Instantiated')
         QThread.__init__(self)
-        self.cmd = ValidatorRunner.WIRESHARK_PATH + ValidatorRunner.VALIDATOR_FILENAME
-        if pcap_filename != None:
-            self.cmd+= " " + pcap_filename
-        else:
-            logging.error("ValidatorRunner(): No pcapng specified! Not processing.")
-            return
+        self.cmd = os.path.join(ValidatorRunner.VALIDATOR_PATH, ValidatorRunner.VALIDATOR_FILENAME)
+        self.cmd = self.cmd + " " + commented_pcap_filename + " " + validate_pcap_filename
         logging.info('ValidatorRunner(): Complete')
 
     def run(self):
