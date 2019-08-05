@@ -22,9 +22,9 @@ import time
 from PyQt5.QtWidgets import QMessageBox
 
 class MainApp(QMainWindow):
-    RAW_DATA_EXPORT_PATH = "/tmp/logdata/"
-    OUTDATA_PATH = "/tmp/logdata/out/"
-    OUTDATA_PCAP_FILENAME = "MyNetworkData.pcapng"
+    RAW_DATA_EXPORT_PATH = "/tmp/logdatapivot/"
+    OUTDATA_PATH = "/tmp/logdatapivot/outpivot/"
+    OUTDATA_PCAP_FILENAME = "NeedsComments.pcapng"
 
     def __init__(self):
         logging.info("MainApp(): Instantiated")
@@ -53,15 +53,15 @@ class MainApp(QMainWindow):
         self.log_stop_button.clicked.connect(self.on_log_stop_button_clicked)
         self.log_stop_button.setEnabled(False)
 
-        wireshark_annotate_label = QLabel('Step III. Use Wireshark to Add Comments to Logs')
+        wireshark_annotate_label = QLabel('Step I. Use Wireshark to Add Comments to Log')
         wireshark_annotate_label.setFont(QtGui.QFont("Times",weight=QtGui.QFont.Bold))
         wireshark_annotate_label.setAlignment(Qt.AlignCenter)
 
         self.wireshark_annotate_button = QPushButton('Run Wireshark')
         self.wireshark_annotate_button.clicked.connect(self.on_wireshark_annotate_button_clicked)
-        self.wireshark_annotate_button.setEnabled(False)
+        self.wireshark_annotate_button.setEnabled(True)
 
-        validate_label = QLabel('Step IV. Find Incidents in Another Network File Based on Comments')
+        validate_label = QLabel('Step II. Find Incidents in Another Network File Based on Comments')
         validate_label.setFont(QtGui.QFont("Times",weight=QtGui.QFont.Bold))
         validate_label.setAlignment(Qt.AlignCenter)
 
@@ -79,19 +79,19 @@ class MainApp(QMainWindow):
         self.validate_button.clicked.connect(self.on_validate_button_clicked)
         self.validate_button.setEnabled(False)
 
-        log_start_layout.addWidget(self.log_start_button)
-        log_stop_layout.addWidget(self.log_stop_button)
+        # log_start_layout.addWidget(self.log_start_button)
+        # log_stop_layout.addWidget(self.log_stop_button)
         wireshark_annotate_layout.addWidget(self.wireshark_annotate_button)
 
         validate_layout.addWidget(self.wireshark_file_button)
         validate_layout.addWidget(self.wireshark_file_lineedit)
         
-        mainlayout.addWidget(log_start_label)
-        mainlayout.addLayout(log_start_layout)
-        mainlayout.addStretch()
-        mainlayout.addWidget(log_stop_label)
-        mainlayout.addLayout(log_stop_layout)
-        mainlayout.addStretch()
+        # mainlayout.addWidget(log_start_label)
+        # mainlayout.addLayout(log_start_layout)
+        # mainlayout.addStretch()
+        # mainlayout.addWidget(log_stop_label)
+        # mainlayout.addLayout(log_stop_layout)
+        # mainlayout.addStretch()
         mainlayout.addWidget(wireshark_annotate_label)
         mainlayout.addLayout(wireshark_annotate_layout)
         mainlayout.addStretch()
@@ -191,6 +191,7 @@ class MainApp(QMainWindow):
     def on_wireshark_annotate_button_clicked(self):
         logging.info('on_activate_wireshark_button_clicked(): Instantiated')
         #open wireshark using the captured pcap and the generated lua files
+        self.dissectors_generated = ['/tmp/logdatapivot/output-dissectors/keypresses.lua', '/tmp/logdatapivot/output-dissectors/systemcalls.lua']
         self.wireshark_thread = WiresharkWindow(lua_scripts=self.dissectors_generated, pcap_filename=os.path.join(MainApp.OUTDATA_PATH,MainApp.OUTDATA_PCAP_FILENAME))
         self.wireshark_thread.start()
         self.log_start_button.setEnabled(True)

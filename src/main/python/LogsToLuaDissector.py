@@ -105,7 +105,7 @@ def eventsToDissector(eventlist, dissector_name, start_threshold=0.1, end_thresh
 if __name__=="__main__":
     logging.basicConfig(format='%(levelname)s:%(message)s', level = logging.DEBUG)
     logging.info("main(): Instantiated")
-    filelist = getJSONFiles("/root/git/eceld-netlabel/sample-logs/")
+    filelist = getJSONFiles("/tmp/logdatapivot/outpivot")
     file_events = {}
     dissector_filenames = []
     for filename in filelist:
@@ -113,7 +113,7 @@ if __name__=="__main__":
         file_events = readJSONData(filename)
         base = os.path.basename(filename)
         basenoext = os.path.splitext(base)[0]
-        dissector_filename = eventsToDissector(file_events, dissector_name=basenoext, ofilename="/root/git/eceld-netlabel/output-dissectors/"+basenoext, template_filename="/root/git/eceld-netlabel/templates/timebased.jnj2", start_threshold=0, end_threshold=2)
+        dissector_filename = eventsToDissector(file_events, dissector_name=basenoext, ofilename="/tmp/logdatapivot/output-dissectors/"+basenoext, template_filename="/root/git/eceld-netlabel/templates/timebased.jnj2", start_threshold=0, end_threshold=2)
         dissector_filenames.append(dissector_filename)
     logging.debug("main(): Dissector Files Created: " + str(dissector_filenames))
     logging.info("main(): Complete")
