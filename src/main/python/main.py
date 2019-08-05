@@ -24,7 +24,7 @@ from PyQt5.QtWidgets import QMessageBox
 class MainApp(QMainWindow):
     RAW_DATA_EXPORT_PATH = "/tmp/logdata/"
     OUTDATA_PATH = "/tmp/logdata/out/"
-    OUTDATA_PCAP_FILENAME = "merged.pcapng"
+    OUTDATA_PCAP_FILENAME = "MyNetworkData.pcapng"
 
     def __init__(self):
         logging.info("MainApp(): Instantiated")
