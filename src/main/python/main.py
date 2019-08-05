@@ -24,6 +24,7 @@ class MainApp(QMainWindow):
     RAW_DATA_EXPORT_PATH = "/tmp/logdata/"
     OUTDATA_PATH = "/tmp/logdata/out/"
     OUTDATA_PCAP_FILENAME = "merged.pcapng"
+
     def __init__(self):
         logging.info("MainApp(): Instantiated")
         super(MainApp, self).__init__()
@@ -214,7 +215,16 @@ class MainApp(QMainWindow):
         logging.info('on_wireshark_file_button_clicked(): Complete')
     
     def on_validate_button_clicked(self):
-        pass
+        logging.info('on_validate_button_clicked(): Instantiated')
+        self.validator_thread = ValidatorRunner(pcap_filename=os.path.join(MainApp.OUTDATA_PATH,MainApp.OUTDATA_PCAP_FILENAME))
+        self.validator_thread.start()
+        self.log_start_button.setEnabled(True)
+        self.log_stop_button.setEnabled(False)
+        self.wireshark_annotate_button.setEnabled(True)
+        self.wireshark_file_button.setEnabled(True)
+        self.wireshark_file_lineedit.setEnabled(True)
+        self.validate_button.setEnabled(True)
+        logging.info('on_validate_button_clicked(): Complete')
 
     def getSortedInDirs(self, path, dircontains=""):
         logging.info('getSortedInDirs(): Instantiated')
