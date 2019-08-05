@@ -16,6 +16,7 @@ from GUI.Dialogs.ProgressBarWindow import ProgressBarWindow
 from LogsToLuaDissector import getJSONFiles, readJSONData, eventsToDissector
 from CommandLoad import CommandLoad
 from WiresharkWindow import WiresharkWindow
+from ValidatorRunner import ValidatorRunner
 import time
 
 from PyQt5.QtWidgets import QMessageBox
@@ -48,9 +49,9 @@ class MainApp(QMainWindow):
         log_stop_label.setFont(QtGui.QFont("Times",weight=QtGui.QFont.Bold))
         log_stop_label.setAlignment(Qt.AlignCenter)
 
-        self.log_stop_button = QPushButton('Logger Stop')
+        self.log_stop_button = QPushButton('Logger Stop and Process')
         self.log_stop_button.clicked.connect(self.on_log_stop_button_clicked)
-        self.log_stop_button.setEnabled(True)
+        self.log_stop_button.setEnabled(False)
 
         wireshark_annotate_label = QLabel('Step III. Use Wireshark to Add Comments to Logs')
         wireshark_annotate_label.setFont(QtGui.QFont("Times",weight=QtGui.QFont.Bold))
@@ -203,8 +204,10 @@ class MainApp(QMainWindow):
     def on_wireshark_file_button_clicked(self):
         logging.info('on_wireshark_file_button_clicked(): Instantiated')
         file_chosen = WiresharkFileDialog().wireshark_dialog()
-        if file_chosen != "":
-            self.wireshark_file_lineedit.setText(file_chosen)
+        if file_chosen == "":
+            logging.error("File choose canceled")
+            return
+        self.wireshark_file_lineedit.setText(file_chosen)
         if self.wireshark_file_lineedit.text() != "Please select a pcap or pcapng file":
             self.log_start_button.setEnabled(True)
             self.log_stop_button.setEnabled(False)
@@ -216,7 +219,7 @@ class MainApp(QMainWindow):
     
     def on_validate_button_clicked(self):
         logging.info('on_validate_button_clicked(): Instantiated')
-        self.validator_thread = ValidatorRunner(pcap_filename=os.path.join(MainApp.OUTDATA_PATH,MainApp.OUTDATA_PCAP_FILENAME))
+        self.validator_thread = ValidatorRunner(os.path.join(MainApp.OUTDATA_PATH,MainApp.OUTDATA_PCAP_FILENAME), self.wireshark_file_lineedit.text())
         self.validator_thread.start()
         self.log_start_button.setEnabled(True)
         self.log_stop_button.setEnabled(False)
@@ -235,7 +238,10 @@ class MainApp(QMainWindow):
             if os.path.isdir(fullpath) and (dircontains in name):
                 dirs.append(fullpath)
         logging.info('getSortedInDirs(): Completed')
-        return dirs
+        if dirs != None:
+            return sorted(dirs)
+        else:
+            return []
 
 if __name__ == '__main__':
     logging.info("main(): Instantiated")

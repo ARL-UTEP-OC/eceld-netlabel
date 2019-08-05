@@ -5,6 +5,10 @@ class WiresharkFileDialog:
     def wireshark_dialog(self):
         logging.info('wireshark_dialog(): Instantiated')
         widget = QFileDialog()
+        filename = ""
         filename, _ = QFileDialog.getOpenFileNames(widget, "Choose a Wireshark file", "", "Wireshark Files (*.pcapng)")
-        return filename[0]
+        if len(filename) > 0:
+            return filename[0]
+        else:
+            return ""
         logging.info('wireshark_dialog(): Completed')
