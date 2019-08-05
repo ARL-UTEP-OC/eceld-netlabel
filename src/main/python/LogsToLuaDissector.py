@@ -43,7 +43,9 @@ def readJSONData(file_loc=None):
             json_filename = file_loc
         else:
             json_filename = os.path.join(cwd, '2019_06_11Traffic_Curation_files/IV_snoopyData.JSON')
-        logging.info("readJSONData(): reading file as json data")
+        logging.info("readJSONData(): reading file as json data: " + str(json_filename))
+        print("readJSONData(): reading file as json data: " + str(json_filename))
+
         with open(json_filename, 'r') as json_file:
             data = json.load(json_file)
             for p in data:

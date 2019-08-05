@@ -49,7 +49,7 @@ class MainApp(QMainWindow):
 
         self.log_stop_button = QPushButton('Logger Stop')
         self.log_stop_button.clicked.connect(self.on_log_stop_button_clicked)
-        self.log_stop_button.setEnabled(False)
+        self.log_stop_button.setEnabled(True)
 
         wireshark_annotate_label = QLabel('Step III. Use Wireshark to Add Comments to Logs')
         wireshark_annotate_label.setFont(QtGui.QFont("Times",weight=QtGui.QFont.Bold))
@@ -140,7 +140,7 @@ class MainApp(QMainWindow):
         try:
             #cp all JSON files to out dir
             snoopyFile = os.path.join(latestlogdir,"parsed","snoopy","snoopyData.JSON")
-            keystrokesFile = os.path.join(latestlogdir,"parsed","pykeylogger","detailed_log","keystrokeData.JSON")
+            keystrokesFile = os.path.join(latestlogdir,"parsed","pykeylogger","keypressData.JSON")
             if os.path.exists(snoopyFile):
                 shutil.copy(snoopyFile,os.path.join(MainApp.OUTDATA_PATH,"SystemCalls.JSON"))
             if os.path.exists(keystrokesFile):

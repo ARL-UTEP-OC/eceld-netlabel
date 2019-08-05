@@ -27,16 +27,10 @@ class ECELDClient():
     def parseDataAll(self):
         logging.debug("parseDataAll(): requesting to parse all data")
         self.ecel_manager.parse_data_all()
+        time.sleep(5)
 
     def exportData(self, path=None):
         logging.debug("exportData(): requesting to export data to " + str(path))
-        anyParsersRunning = self.ecel_manager.is_parser_running()
-        print ("Checking if parsers running: " + str(anyParsersRunning))
-        while anyParsersRunning == True:
-            print ("Waiting a few seconds...")
-            time.sleep(5)
-            anyParsersRunning = self.ecel_manager.is_parser_running()
-        print ("No more parsers running. Continuing...")
         if path == None:
             path = "/tmp/"
         try:
