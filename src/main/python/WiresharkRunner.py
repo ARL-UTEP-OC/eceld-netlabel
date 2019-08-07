@@ -4,7 +4,7 @@ import shlex
 import sys
 from PyQt5.QtCore import QThread
 
-class WiresharkWindow(QThread):
+class WiresharkRunner(QThread):
     WIRESHARK_PATH="wireshark"
 
     def __init__(self, lua_scripts=None, pcap_filename=None):
