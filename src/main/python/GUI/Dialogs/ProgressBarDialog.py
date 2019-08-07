@@ -7,13 +7,13 @@ class ProgressBarDialog(QDialog):
         super().__init__(parent)
         self.setModal(True)
         self.completed = 0
-        self.setWindowTitle('Processing Data')
+        self.setWindowTitle('Progress Dialog')
         self.setFixedSize(300, 100)
         # self.progress_bar(bar_length)
 
         mainlayout = QVBoxLayout()
 
-        self.label4 = QLabel('Progress')
+        self.label4 = QLabel('Processing, please wait...')
         self.label4.setAlignment(Qt.AlignCenter)
         
         self.progress = QProgressBar(self)
