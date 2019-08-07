@@ -29,10 +29,6 @@ class CommandLoad(QThread):
             #run the function with provided arguments
             funcname(*args)
             #emit when file done reading
-            print ("READ")
             self.signal.emit()
-            time.sleep(2)
-        logging.info("run(): Complete")
-        print ("COMPLETED")
         self.signal2.emit()
         logging.info('CommandLoad.run(): Completed')

@@ -26,6 +26,9 @@ class MainApp(QMainWindow):
     OUTDATA_PATH = "/tmp/logdata/out/"
     OUTDATA_PCAP_FILENAME = "MyNetworkData.pcapng"
 
+    BEFORE_PACKET_TIME = 0
+    AFTER_PACKET_TIME = 2
+
     def __init__(self):
         logging.info("MainApp(): Instantiated")
         super(MainApp, self).__init__()
@@ -117,8 +120,6 @@ class MainApp(QMainWindow):
 
     def on_log_stop_button_clicked(self):
         logging.info('on_log_stop_button_clicked(): Instantiated')
-        self.progress_window_overall = ProgressBarWindow(5)
-        #self.progress_window_overall.show()
 
         self.command_thread = CommandLoad()
         self.command_thread.signal.connect(self.update_progress_bar)
@@ -127,20 +128,17 @@ class MainApp(QMainWindow):
         self.command_thread.addFunction(self.eclient.stopCollectors)
         self.command_thread.addFunction(self.eclient.parseDataAll)
         self.command_thread.addFunction(self.eclient.exportData, "/tmp/logdata")
-        
-        #create lua dissectors based on log data and store results into outdir
-        #self.command_thread = CommandLoad(log_directory=MainApp.OUTDATA_PATH)
-        #self.command_thread.signal.connect(self.update_progress_bar)
-        #self.command_thread.signal2.connect(self.thread_finish)
-        #self.progress_window = ProgressBarWindow(self.command_thread.getLoadCount())
-        print ("LOAD COUNT: " + str(self.command_thread.getLoadCount()))
+        self.command_thread.addFunction(self.copyData)
+        self.command_thread.addFunction(self.generateDissectors)
 
-        self.progress_window_overall.show()
+        self.progress_window_overall = ProgressBarWindow(self, self.command_thread.getLoadCount())
         self.command_thread.start()
+        self.progress_window_overall.show()
         
         logging.info('on_log_stop_button_clicked(): Complete')
 
-    def cpData():
+    def copyData(self):
+        logging.info('copyData(): Instantiated')
         #get the most recent exported directory:
         latestlogsdir = ""
         mydir = os.path.join(MainApp.RAW_DATA_EXPORT_PATH)
@@ -176,23 +174,47 @@ class MainApp(QMainWindow):
             logging.error("on_log_stop_button_clicked(): An error occured when trying to copy log files")
             exc_type, exc_value, exc_traceback = sys.exc_info()
             traceback.print_exception(exc_type, exc_value, exc_traceback)
+    
+    def generateDissectors(self):
+        logging.info('generateDissectors(): Instantiated')
+        #get files in directory
+        self.filelist = getJSONFiles(MainApp.OUTDATA_PATH)
+        self.completed_dissector_filenames = []
+        file_events = {}
+        
+        try:
 
+            if os.path.exists("output-dissectors") == False:
+                os.makedirs("output-dissectors")
+        except:
+            logging.error("generateDissectors(): An error occured when trying to copy log files")
+            exc_type, exc_value, exc_traceback = sys.exc_info()
+            traceback.print_exception(exc_type, exc_value, exc_traceback)
+    
+        for filename in self.filelist:
+            #save the filename as a key, all the events (event, time) as the value
+            file_events = readJSONData(filename)
+            base = os.path.basename(filename)
+            basenoext = os.path.splitext(base)[0]
+            dissector_filename = eventsToDissector(file_events, dissector_name=basenoext, ofilename="output-dissectors/"+basenoext, template_filename="templates/timebased.jnj2", start_threshold=MainApp.BEFORE_PACKET_TIME, end_threshold=MainApp.AFTER_PACKET_TIME)
+            self.completed_dissector_filenames.append(dissector_filename)
+
+        logging.info('generateDissectors(): Completed')
 
     def update_progress_bar(self):
-        print("UPDATING PROGRESS")
+        logging.debug('generateDissectors(): Instantiated')
         self.progress_window_overall.update_progress()
-        #self.progress_window.show()
+        logging.debug('generateDissectors(): Complete')
 
     def thread_finish(self):
-        logging.info('CommandLoad(): Thread Finished')
-        print("THREAD FINISHED")
+        logging.info('thread_finish(): Instantiated')
+        self.progress_window_overall.update_progress()
         self.progress_window_overall.hide()
-        #self.progress_window_overall.update_progress()
-        
-        self.dissectors_generated = self.command_thread.getCompleted()
-        output_dissected = "Embedded data in file:\r\n"
-        for dissected in self.dissectors_generated:
-            output_dissected += dissected + str(dissected.replace(".lua","")) +"\r\n"
+
+        output_dissected = "Processed Network Capture. \r\nIncludes:\r\n"
+        for dissected in self.completed_dissector_filenames:
+            output_dissected += str(dissected.replace(".lua","")) +"\r\n"
+
         if output_dissected == "":
             QMessageBox.alert(self, "Processing Complete", "No files processed")
         else: 
@@ -203,11 +225,12 @@ class MainApp(QMainWindow):
             self.wireshark_file_button.setEnabled(False)
             self.wireshark_file_lineedit.setEnabled(False)
             self.validate_button.setEnabled(False)
+        logging.info('thread_finish(): Completed')
 
     def on_wireshark_annotate_button_clicked(self):
         logging.info('on_activate_wireshark_button_clicked(): Instantiated')
         #open wireshark using the captured pcap and the generated lua files
-        self.wireshark_thread = WiresharkWindow(lua_scripts=self.dissectors_generated, pcap_filename=os.path.join(MainApp.OUTDATA_PATH,MainApp.OUTDATA_PCAP_FILENAME))
+        self.wireshark_thread = WiresharkWindow(lua_scripts=self.completed_dissector_filenames, pcap_filename=os.path.join(MainApp.OUTDATA_PATH,MainApp.OUTDATA_PCAP_FILENAME))
         self.wireshark_thread.start()
         self.log_start_button.setEnabled(True)
         self.log_stop_button.setEnabled(False)

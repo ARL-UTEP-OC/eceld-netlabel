@@ -53,7 +53,7 @@ def readJSONData(file_loc=None):
                     p['content'] = "Event Occured"
                 logging.debug("readJSONData(): appending: " + (str(p['content']) + " " + str(p['start']) + " " + str(timegm(time.strptime(str(p['start']), "%Y-%m-%dT%H:%M:%S")) ) ))
                 eventlist.append( (str(p['content']),str(p['start']), timegm(time.strptime(str(p['start']), "%Y-%m-%dT%H:%M:%S"))) )
-        logging.info("readJSONData(): File reading complete")
+        logging.debug("readJSONData(): File reading complete")
         return (eventlist)
 
     except Exception:

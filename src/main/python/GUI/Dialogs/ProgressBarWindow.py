@@ -3,8 +3,8 @@ from PyQt5.QtWidgets import QMainWindow, QWidget, QVBoxLayout, QLabel, QProgress
 
 class ProgressBarWindow(QMainWindow):
     
-    def __init__(self, bar_length):
-        super().__init__()
+    def __init__(self, parent, bar_length):
+        super().__init__(parent)
         self.completed = 0
         self.setWindowTitle('Processing Data')
         self.setFixedSize(300, 100)
