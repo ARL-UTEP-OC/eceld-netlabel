@@ -6,7 +6,7 @@ class ProgressBarWindow(QMainWindow):
     def __init__(self, bar_length):
         super().__init__()
         self.completed = 0
-        self.setWindowTitle('Annotating')
+        self.setWindowTitle('Processing Data')
         self.setFixedSize(300, 100)
         self.progress_bar(bar_length)
 
@@ -15,14 +15,14 @@ class ProgressBarWindow(QMainWindow):
         self.setCentralWidget(mainwidget)
         mainlayout = QVBoxLayout()
 
-        label4 = QLabel('Annotation progress')
-        label4.setAlignment(Qt.AlignCenter)
+        self.label4 = QLabel('Progress')
+        self.label4.setAlignment(Qt.AlignCenter)
         
         self.progress = QProgressBar(self)
         self.progress.setGeometry(50, 40, 200, 20)
         self.progress.setMaximum(bar_length)
         
-        mainlayout.addWidget(label4)
+        mainlayout.addWidget(self.label4)
         mainlayout.addStretch()
         mainwidget.setLayout(mainlayout)
 

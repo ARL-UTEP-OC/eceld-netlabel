@@ -51,7 +51,7 @@ class MainApp(QMainWindow):
 
         self.log_stop_button = QPushButton('Logger Stop and Process')
         self.log_stop_button.clicked.connect(self.on_log_stop_button_clicked)
-        self.log_stop_button.setEnabled(False)
+        self.log_stop_button.setEnabled(True)
 
         wireshark_annotate_label = QLabel('Step III. Use Wireshark to Add Comments to Logs')
         wireshark_annotate_label.setFont(QtGui.QFont("Times",weight=QtGui.QFont.Bold))
@@ -117,9 +117,30 @@ class MainApp(QMainWindow):
 
     def on_log_stop_button_clicked(self):
         logging.info('on_log_stop_button_clicked(): Instantiated')
-        self.eclient.stopCollectors()
-        self.eclient.parseDataAll()
-        self.eclient.exportData("/tmp/logdata")
+        self.progress_window_overall = ProgressBarWindow(5)
+        #self.progress_window_overall.show()
+
+        self.command_thread = CommandLoad()
+        self.command_thread.signal.connect(self.update_progress_bar)
+        self.command_thread.signal2.connect(self.thread_finish)
+        
+        self.command_thread.addFunction(self.eclient.stopCollectors)
+        self.command_thread.addFunction(self.eclient.parseDataAll)
+        self.command_thread.addFunction(self.eclient.exportData, "/tmp/logdata")
+        
+        #create lua dissectors based on log data and store results into outdir
+        #self.command_thread = CommandLoad(log_directory=MainApp.OUTDATA_PATH)
+        #self.command_thread.signal.connect(self.update_progress_bar)
+        #self.command_thread.signal2.connect(self.thread_finish)
+        #self.progress_window = ProgressBarWindow(self.command_thread.getLoadCount())
+        print ("LOAD COUNT: " + str(self.command_thread.getLoadCount()))
+
+        self.progress_window_overall.show()
+        self.command_thread.start()
+        
+        logging.info('on_log_stop_button_clicked(): Complete')
+
+    def cpData():
         #get the most recent exported directory:
         latestlogsdir = ""
         mydir = os.path.join(MainApp.RAW_DATA_EXPORT_PATH)
@@ -156,27 +177,22 @@ class MainApp(QMainWindow):
             exc_type, exc_value, exc_traceback = sys.exc_info()
             traceback.print_exception(exc_type, exc_value, exc_traceback)
 
-        #create lua dissectors based on log data and store results into outdir
-        self.command_thread = CommandLoad(log_directory=MainApp.OUTDATA_PATH)
-        self.command_thread.signal.connect(self.update_progress_bar)
-        self.command_thread.signal2.connect(self.thread_finish)
-        self.progress_window = ProgressBarWindow(self.command_thread.getLoadCount())
-        self.progress_window.show()
-        self.command_thread.start()
-
-        logging.info('on_log_stop_button_clicked(): Complete')
 
     def update_progress_bar(self):
-        self.progress_window.update_progress()
-        self.progress_window.show()
+        print("UPDATING PROGRESS")
+        self.progress_window_overall.update_progress()
+        #self.progress_window.show()
 
     def thread_finish(self):
         logging.info('CommandLoad(): Thread Finished')
-        self.progress_window.hide()
+        print("THREAD FINISHED")
+        self.progress_window_overall.hide()
+        #self.progress_window_overall.update_progress()
+        
         self.dissectors_generated = self.command_thread.getCompleted()
-        output_dissected = "Files generated:\r\n"
+        output_dissected = "Embedded data in file:\r\n"
         for dissected in self.dissectors_generated:
-            output_dissected += dissected + "\r\n"
+            output_dissected += dissected + str(dissected.replace(".lua","")) +"\r\n"
         if output_dissected == "":
             QMessageBox.alert(self, "Processing Complete", "No files processed")
         else: 
