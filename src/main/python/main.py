@@ -22,8 +22,8 @@ import time
 from PyQt5.QtWidgets import QMessageBox
 
 class MainApp(QMainWindow):
-    RAW_DATA_EXPORT_PATH = "/tmp/logdatapivot/"
-    OUTDATA_PATH = "/tmp/logdatapivot/outpivot/"
+    RAW_DATA_EXPORT_PATH = "/sav/logdatapivot/"
+    OUTDATA_PATH = "/sav/logdatapivot/outpivot/"
     OUTDATA_PCAP_FILENAME = "NeedsComments.pcapng"
 
     def __init__(self):
@@ -119,7 +119,7 @@ class MainApp(QMainWindow):
         logging.info('on_log_stop_button_clicked(): Instantiated')
         self.eclient.stopCollectors()
         self.eclient.parseDataAll()
-        self.eclient.exportData("/tmp/logdata")
+        self.eclient.exportData("/sav/logdata")
         #get the most recent exported directory:
         latestlogsdir = ""
         mydir = os.path.join(MainApp.RAW_DATA_EXPORT_PATH)
@@ -191,7 +191,7 @@ class MainApp(QMainWindow):
     def on_wireshark_annotate_button_clicked(self):
         logging.info('on_activate_wireshark_button_clicked(): Instantiated')
         #open wireshark using the captured pcap and the generated lua files
-        self.dissectors_generated = ['/tmp/logdatapivot/output-dissectors/keypresses.lua', '/tmp/logdatapivot/output-dissectors/systemcalls.lua']
+        self.dissectors_generated = ['/sav/logdatapivot/output-dissectors/keypresses.lua', '/sav/logdatapivot/output-dissectors/systemcalls.lua']
         self.wireshark_thread = WiresharkWindow(lua_scripts=self.dissectors_generated, pcap_filename=os.path.join(MainApp.OUTDATA_PATH,MainApp.OUTDATA_PCAP_FILENAME))
         self.wireshark_thread.start()
         self.log_start_button.setEnabled(True)
