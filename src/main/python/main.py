@@ -12,10 +12,10 @@ from ECELDClient import ECELDClient
 
 from GUI.Dialogs.JSONFolderDialog import JSONFolderDialog
 from GUI.Dialogs.WiresharkFileDialog import WiresharkFileDialog
-from GUI.Dialogs.ProgressBarWindow import ProgressBarWindow
+from GUI.Dialogs.ProgressBarDialog import ProgressBarDialog
 from LogsToLuaDissector import getJSONFiles, readJSONData, eventsToDissector
 from CommandLoad import CommandLoad
-from WiresharkWindow import WiresharkWindow
+from WiresharkRunner import WiresharkRunner
 from ValidatorRunner import ValidatorRunner
 import time
 
@@ -131,9 +131,9 @@ class MainApp(QMainWindow):
         self.command_thread.addFunction(self.copyData)
         self.command_thread.addFunction(self.generateDissectors)
 
-        self.progress_window_overall = ProgressBarWindow(self, self.command_thread.getLoadCount())
+        self.progress_dialog_overall = ProgressBarDialog(self, self.command_thread.getLoadCount())
         self.command_thread.start()
-        self.progress_window_overall.show()
+        self.progress_dialog_overall.show()
         
         logging.info('on_log_stop_button_clicked(): Complete')
 
@@ -203,13 +203,13 @@ class MainApp(QMainWindow):
 
     def update_progress_bar(self):
         logging.debug('generateDissectors(): Instantiated')
-        self.progress_window_overall.update_progress()
+        self.progress_dialog_overall.update_progress()
         logging.debug('generateDissectors(): Complete')
 
     def thread_finish(self):
         logging.info('thread_finish(): Instantiated')
-        self.progress_window_overall.update_progress()
-        self.progress_window_overall.hide()
+        self.progress_dialog_overall.update_progress()
+        self.progress_dialog_overall.hide()
 
         output_dissected = "Processed Network Capture. \r\nIncludes:\r\n"
         for dissected in self.completed_dissector_filenames:
@@ -230,7 +230,7 @@ class MainApp(QMainWindow):
     def on_wireshark_annotate_button_clicked(self):
         logging.info('on_activate_wireshark_button_clicked(): Instantiated')
         #open wireshark using the captured pcap and the generated lua files
-        self.wireshark_thread = WiresharkWindow(lua_scripts=self.completed_dissector_filenames, pcap_filename=os.path.join(MainApp.OUTDATA_PATH,MainApp.OUTDATA_PCAP_FILENAME))
+        self.wireshark_thread = WiresharkRunner(lua_scripts=self.completed_dissector_filenames, pcap_filename=os.path.join(MainApp.OUTDATA_PATH,MainApp.OUTDATA_PCAP_FILENAME))
         self.wireshark_thread.start()
         self.log_start_button.setEnabled(True)
         self.log_stop_button.setEnabled(False)

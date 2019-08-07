@@ -1,18 +1,16 @@
 from PyQt5.QtCore import *
-from PyQt5.QtWidgets import QMainWindow, QWidget, QVBoxLayout, QLabel, QProgressBar
+from PyQt5.QtWidgets import QDialog, QWidget, QVBoxLayout, QLabel, QProgressBar
 
-class ProgressBarWindow(QMainWindow):
+class ProgressBarDialog(QDialog):
     
     def __init__(self, parent, bar_length):
         super().__init__(parent)
+        self.setModal(True)
         self.completed = 0
         self.setWindowTitle('Processing Data')
         self.setFixedSize(300, 100)
-        self.progress_bar(bar_length)
+        # self.progress_bar(bar_length)
 
-    def progress_bar(self, bar_length):
-        mainwidget = QWidget()
-        self.setCentralWidget(mainwidget)
         mainlayout = QVBoxLayout()
 
         self.label4 = QLabel('Progress')
@@ -24,7 +22,7 @@ class ProgressBarWindow(QMainWindow):
         
         mainlayout.addWidget(self.label4)
         mainlayout.addStretch()
-        mainwidget.setLayout(mainlayout)
+        self.setLayout(mainlayout)
 
     def update_progress(self):
         self.completed += 1
