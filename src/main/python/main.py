@@ -6,7 +6,7 @@ import pprint
 from fbs_runtime.application_context.PyQt5 import ApplicationContext
 from PyQt5 import QtGui
 from PyQt5.QtCore import *
-from PyQt5.QtWidgets import QMainWindow, QWidget, QVBoxLayout, QHBoxLayout, QLabel, QPushButton, QLineEdit, QProgressBar, QDoubleSpinBox, QSpinBox
+from PyQt5.QtWidgets import QMainWindow, QWidget, QVBoxLayout, QHBoxLayout, QLabel, QPushButton, QLineEdit, QProgressBar, QDoubleSpinBox, QSpinBox, QAction, qApp
 
 from ECELDClient import ECELDClient
 
@@ -32,6 +32,7 @@ class MainApp(QMainWindow):
     def __init__(self):
         logging.info("MainApp(): Instantiated")
         super(MainApp, self).__init__()
+        self.logger_started_once = False
         self.setWindowTitle('Traffic Annotation Workflow')
         mainwidget = QWidget()
         self.setCentralWidget(mainwidget)
@@ -40,6 +41,9 @@ class MainApp(QMainWindow):
         log_stop_layout = QHBoxLayout()
         wireshark_annotate_layout = QHBoxLayout()
         validate_layout = QHBoxLayout()
+
+        quit = QAction("Quit", self)
+        quit.triggered.connect(self.closeEvent)
 
         log_start_label = QLabel('Step I. Start Logging Network Data and Actions')
         log_start_label.setFont(QtGui.QFont("Times",weight=QtGui.QFont.Bold))
@@ -109,6 +113,12 @@ class MainApp(QMainWindow):
     
     def on_log_start_button_clicked(self):
         logging.info('on_log_start_button_clicked(): Instantiated')
+        if self.logger_started_once == True:
+            buttonReply = QMessageBox.question(self, 'Confirmation', "Restarting the Logger will Remove any Previous Data. \r\n Continue?", QMessageBox.Yes | QMessageBox.No, QMessageBox.No)
+            if buttonReply != QMessageBox.Yes:
+                logging.info('on_log_start_button_clicked(): Cancelled')
+                return
+        self.logger_started_once = True
         self.eclient.startCollectors()
         self.log_start_button.setEnabled(False)
         self.log_stop_button.setEnabled(True)
@@ -281,6 +291,42 @@ class MainApp(QMainWindow):
             return sorted(dirs)
         else:
             return []
+
+
+    def closeEvent(self, event):
+        logging.debug("closeEvent(): instantiated")
+        self.quit_event = event
+        if self.log_start_button.isEnabled() == True:
+            self.quitApp(event)
+        if self.log_start_button.isEnabled() == False:
+            close = QMessageBox.question(self,
+                                            "QUIT",
+                                            "Logger is running. Stop and Quit?",
+                                            QMessageBox.Yes | QMessageBox.No)
+            if close == QMessageBox.Yes:
+                logging.debug("closeEvent(): Creating Quit Command Load")
+                #need to create a thread (probably a dialog box with disabled ok button until connection either times out (5 seconds), connection good
+                self.command_thread = CommandLoad()
+                self.command_thread.signal.connect(self.update_progress_bar)
+                self.command_thread.signal2.connect(self.quitApp)
+                
+                self.command_thread.addFunction(self.eclient.stopCollectors)
+                self.progress_dialog_overall = ProgressBarDialog(self, self.command_thread.getLoadCount())
+                self.command_thread.start()
+                self.progress_dialog_overall.show()
+                return
+        logging.debug("closeEvent(): returning ignore")
+        event.ignore()
+        return
+    
+    def quitApp(self):
+        self.progress_dialog_overall.hide()
+        self.destroy()
+        #continue with any other destruction
+        logging.debug("closeEvent(): accept()")
+        self.quit_event.accept()
+        qApp.quit()
+        return
 
 if __name__ == '__main__':
     logging.info("main(): Instantiated")
