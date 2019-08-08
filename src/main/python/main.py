@@ -58,7 +58,7 @@ class MainApp(QMainWindow):
 
         self.log_stop_button = QPushButton('Logger Stop and Process')
         self.log_stop_button.clicked.connect(self.on_log_stop_button_clicked)
-        self.log_stop_button.setEnabled(True)
+        self.log_stop_button.setEnabled(False)
 
         wireshark_annotate_label = QLabel('Step III. Use Wireshark to Add Comments to Logs')
         wireshark_annotate_label.setFont(QtGui.QFont("Times",weight=QtGui.QFont.Bold))
